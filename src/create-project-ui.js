@@ -65,7 +65,7 @@ class CreateProjectUI extends React.Component {
             if (state.projectTemplateToCopy==templateListJson[i].name){
                 console.log("got it");
                 var projectToPath = "/cepr-test/"+this.state.workspace+"/Projects/"+this.state.projectName+".prproj";
-                var dbx = new Dropbox({ accessToken: '-5_UThBHfIAAAAAAAAAQmCyqAmHg1v7frJRrOnYAiKgiTpZ3rraUCvT6QCQsn6D1', fetch: fetch,selectUser : 'dbmid:AADBTXkkDrFALtA9p24G"VHVoIBg46kiEZEQ' });
+                var dbx = new Dropbox({ accessToken: '-enter access token here', fetch: fetch,selectUser : 'dbmid:AADBTXkkDrFALtA9p24G"VHVoIBg46kiEZEQ' });
                 dbx.filesCopy({"from_path":templatePath+state.projectTemplateToCopy,"to_path": projectToPath,"allow_shared_folder": false,"autorename": false,"allow_ownership_transfer": false})
                     .then(function(response) {
                       console.log(response);

@@ -49,12 +49,7 @@ handleInputChange(event) {
   var Dropbox = require('dropbox').Dropbox;
   var DropboxTeam = require('dropbox').DropboxTeam;
   
-
-  //TMFA -5_UThBHfIAAAAAAAAAQC8xRlJfmu6jPJg7_PqVMMn5SygZX7iZXUE-fRW4mvxXm
-  //TFA -5_UThBHfIAAAAAAAAAQmCyqAmHg1v7frJRrOnYAiKgiTpZ3rraUCvT6QCQsn6D1
-  //user i96Zcu_8aOAAAAAAAAAAJXFBuXccLVUszGQ5bPET8U4zu283iUBX5Bgs2M9Aj5vm
-
-  var dbx = new Dropbox({ accessToken: '-5_UThBHfIAAAAAAAAAQmCyqAmHg1v7frJRrOnYAiKgiTpZ3rraUCvT6QCQsn6D1', fetch: fetch,selectUser : 'dbmid:AADBTXkkDrFALtA9p24GVHVoIBg46kiEZEQ' });
+  var dbx = new Dropbox({ accessToken: 'enter access token here', fetch: fetch,selectUser : 'dbmid:AADBTXkkDrFALtA9p24GVHVoIBg46kiEZEQ' });
   // dbx.filesListFolder({path: ''})
   //   .then(function(response) {
   //     console.log(response);
@@ -115,7 +110,7 @@ handleInputChange(event) {
   localStorage.setItem("workspace",JSON.stringify(this.wsList));
 
 
-    // var dbxTeam = new DropboxTeam({ accessToken: '-5_UThBHfIAAAAAAAAAQC8xRlJfmu6jPJg7_PqVMMn5SygZX7iZXUE-fRW4mvxXm', fetch: fetch});
+    // var dbxTeam = new DropboxTeam({ accessToken: 'enter access token here', fetch: fetch});
     // dbxTeam.teamMembersList()
     //   .then(function(response) {
     //     console.log(response);

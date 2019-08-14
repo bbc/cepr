@@ -32,10 +32,7 @@ class Actions extends React.Component  {
                 var templateList = [];
                 var listItems = null;
     
-                //TMFA -5_UThBHfIAAAAAAAAAQC8xRlJfmu6jPJg7_PqVMMn5SygZX7iZXUE-fRW4mvxXm
-                //TFA -5_UThBHfIAAAAAAAAAQmCyqAmHg1v7frJRrOnYAiKgiTpZ3rraUCvT6QCQsn6D1
-                //user i96Zcu_8aOAAAAAAAAAAJXFBuXccLVUszGQ5bPET8U4zu283iUBX5Bgs2M9Aj5vm
-                var dbx = new Dropbox({ accessToken: '-5_UThBHfIAAAAAAAAAQmCyqAmHg1v7frJRrOnYAiKgiTpZ3rraUCvT6QCQsn6D1', fetch: fetch,selectUser : 'dbmid:AADBTXkkDrFALtA9p24GVHVoIBg46kiEZEQ' });
+                var dbx = new Dropbox({ accessToken: 'enter access token here', fetch: fetch,selectUser : 'dbmid:AADBTXkkDrFALtA9p24GVHVoIBg46kiEZEQ' });
                 dbx.filesListFolder({path: templatePath})
                 .then(function(response) {
                    // console.log(response);
