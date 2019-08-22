@@ -1,0 +1,43 @@
+.login {
+	background-image: url('../static/images/sf-mark.png');
+	background-repeat: repeat;
+	background-size: 33vw;
+	width: 100vw;
+	height: 100vh;
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	&:before {
+		background-color: $sf-purple;
+		content: '';
+		display: block;
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		top: 0;
+		left: 0;
+		opacity: 0.3;
+	}
+}
+
+.login__content {
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+	padding: $base-spacing * 2;
+	z-index: 1;
+	width: 50%;
+	max-width: 650px;
+}
+
+.login__welcome-txt {
+	margin-bottom: $base-spacing;
+}
+
+.login__btn {
+	@extend .cepr-btn;
+	align-self: flex-end;
+	margin-top: $base-spacing;
+}

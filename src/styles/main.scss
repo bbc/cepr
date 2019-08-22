@@ -1,0 +1,20 @@
+// variables, settings and utilties
+@import '~sass-mq/mq';
+@import '~gel-sass-tools/sass-tools';
+@import '~gel-grid/grid';
+@import '~gel-typography/gel-typography.css/gel-typography.min.css';
+
+@import './settings/palette';
+@import './settings/spacing';
+
+// baselines
+@import '~normalize.css';
+@import './fontface';
+@import './base';
+
+// third party components
+@import '~@bbc/igm-input/dist/Input.css';
+@import '~@bbc/igm-navigation-header/dist/NavigationHeader.css';
+
+// our components
+@import './components/all';
