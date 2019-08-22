@@ -1,7 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { bigIntLiteral } from '@babel/types';
-import ProjectObject from '../workspace/project';
+import ProjectObject from './workspace/project';
 
 class CreateProjectUI extends React.Component {
 	constructor(props) {
