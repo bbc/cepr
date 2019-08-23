@@ -1,16 +1,23 @@
 import React from 'react';
+import GELIcon from '@bbc/igm-gel-icon';
 import Input from '@bbc/igm-input';
+import Notification from '@bbc/igm-notification';
 import { StoreContext, useStoreData } from '../store';
 
 function Login({ history }) {
-	const { email, setEmail } = useStoreData(
+	const { authUser, email, error, setEmail } = useStoreData(
 		StoreContext,
 		store => store.userStore,
-		userStore => ({ email: userStore.email, setEmail: userStore.setEmail })
+		userStore => ({
+			authUser: userStore.authUser,
+			email: userStore.email,
+			error: userStore.error,
+			setEmail: userStore.setEmail,
+		})
 	);
 
-	const onInputChange = value => setEmail(value);
-	const onBtnClick = () => history.push('/');
+	const onAuthSuccess = () => history.push('/');
+	const onBtnClick = () => authUser(onAuthSuccess);
 
 	return (
 		<div className="login">
@@ -18,8 +25,14 @@ function Login({ history }) {
 				<p className="gel-great-primer-bold login__welcome-txt">
 					Welcome to CEPR <sup>(ˈki pər)</sup>
 				</p>
-				<Input label="Email address" onChange={onInputChange} onClickReset={setEmail} value={email} />
-				<button className="login__btn gel-long-primer-bold" onClick={onBtnClick}>
+				<Notification
+					className="login__error"
+					icon={<GELIcon className="igm-notification__icon " type="alert" />}
+					message={error}
+					hidden={!error}
+				/>
+				<Input label="Email address" onChange={setEmail} onClickReset={setEmail} value={email} />
+				<button className="login__btn gel-long-primer-bold" disabled={!email} onClick={onBtnClick}>
 					Log in
 				</button>
 			</div>

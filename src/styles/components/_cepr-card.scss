@@ -1,0 +1,11 @@
+.cepr-card {
+	background-color: #fff;
+	padding: $base-spacing;
+}
+
+.cepr-card__footer {
+	border-top: 1px solid $beeb-border-color;
+	padding: $base-spacing $base-spacing 0;
+	width: calc(100% + #{$base-spacing * 2});
+	margin-left: -$base-spacing;
+}

@@ -1,3 +1,5 @@
+$gel-grid-enable--markup-output: true;
+
 // variables, settings and utilties
 @import '~sass-mq/mq';
 @import '~gel-sass-tools/sass-tools';
@@ -13,8 +15,12 @@
 @import './base';
 
 // third party components
+@import '~@bbc/igm-dropdown-select/dist/DropdownSelect.css';
 @import '~@bbc/igm-input/dist/Input.css';
 @import '~@bbc/igm-navigation-header/dist/NavigationHeader.css';
+@import '~@bbc/igm-notification/dist/Notification.css';
+
+@import './igm-overrides';
 
 // our components
 @import './components/all';

@@ -48,6 +48,7 @@ class Workspace extends React.Component {
 			fetch: fetch,
 			selectUser: 'dbmid:AADBTXkkDrFALtA9p24GVHVoIBg46kiEZEQ',
 		});
+
 		// dbx.filesListFolder({path: ''})
 		//   .then(function(response) {
 		//     console.log(response);

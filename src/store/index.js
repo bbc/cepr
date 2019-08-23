@@ -7,15 +7,15 @@ export const createStore = () => ({
 	userStore: new UserStore(),
 	workspaceStore: new WorkspaceStore({
 		folderTemplates: [
-			{ text: 'Sports template 1', value: 'template1' },
-			{ text: 'Sports template 2', value: 'template2' },
-			{ text: 'Sports template 3', value: 'template3' },
+			{ label: 'Sports template 1', value: 'template1' },
+			{ label: 'Sports template 2', value: 'template2' },
+			{ label: 'Sports template 3', value: 'template3' },
 		],
 		productionTeams: [
-			{ text: 'Shortform', value: 'shortform' },
-			{ text: 'Sports News', value: 'sports-news' },
-			{ text: 'World Cup Team', value: 'worldcupteam' },
-			{ text: 'Wimbledon', value: 'wimbledon' },
+			{ label: 'Shortform', value: 'shortform' },
+			{ label: 'Sports News', vaue: 'sports-news' },
+			{ label: 'World Cup Team', value: 'worldcupteam' },
+			{ label: 'Wimbledon', value: 'wimbledon' },
 		],
 	}),
 });

@@ -14,18 +14,25 @@ export class WorkspaceStore {
 	@observable
 	productionTeams?: Array<SelectOption>;
 
+	/***
+	 * @TODO
+	 * this should be taken from settings - should be configureable by the user
+	 * */
+	@observable
+	rootFolder?: string = '/cepr-test/';
+
 	@action.bound
-	setName(name: string) {
+	setNewItemName(name: string) {
 		this.newItem.name = name;
 	}
 
 	@action.bound
-	setProductionTeam(team: string) {
+	setNewItemProductionTeam(team: string) {
 		this.newItem.productionTeam = team;
 	}
 
 	@action.bound
-	setFolderTemplate(template: string) {
+	setNewItemFolderTemplate(template: string) {
 		this.newItem.folderTemplate = template;
 	}
 

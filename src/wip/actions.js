@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Container from './ui-container';
-import ProjectTemplate from '../workspace/project-template';
+import ProjectTemplate from './workspace/project-template';
 
 class Actions extends React.Component {
 	constructor() {
