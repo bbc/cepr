@@ -1,0 +1,17 @@
+.cepr-badge {
+	@include gel-typography('minion-bold');
+	color: #fff;
+	padding: $base-spacing / 3 $base-spacing / 1.5;
+
+	&--owner {
+		background-color: $sf-purple;
+	}
+
+	&--editor {
+		background-color: $st-green;
+	}
+
+	&--viewer {
+		background-color: $sv-blue;
+	}
+}

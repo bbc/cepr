@@ -1,4 +1,4 @@
-import CreateProject from './components/CreateProject';
+import Workspaces from './components/Workspaces';
 import CreateWorkspace from './components/CreateWorkspace';
 import SearchProject from './components/SearchProject';
 
@@ -14,9 +14,9 @@ const routes = [
 	},
 	{
 		authed: true,
-		component: CreateProject,
+		component: Workspaces,
 		exact: true,
-		path: '/project/create',
+		path: '/workspaces',
 		text: 'Create project',
 	},
 	{

@@ -1,24 +1,8 @@
 import React, { createContext, useContext } from 'react';
 import { useObserver } from 'mobx-react-lite';
-import { UserStore } from './UserStore';
-import { WorkspaceStore } from './WorkspaceStore';
+import RootStore from './RootStore';
 
-export const createStore = () => ({
-	userStore: new UserStore(),
-	workspaceStore: new WorkspaceStore({
-		folderTemplates: [
-			{ label: 'Sports template 1', value: 'template1' },
-			{ label: 'Sports template 2', value: 'template2' },
-			{ label: 'Sports template 3', value: 'template3' },
-		],
-		productionTeams: [
-			{ label: 'Shortform', value: 'shortform' },
-			{ label: 'Sports News', vaue: 'sports-news' },
-			{ label: 'World Cup Team', value: 'worldcupteam' },
-			{ label: 'Wimbledon', value: 'wimbledon' },
-		],
-	}),
-});
+export const createStore = () => new RootStore();
 
 export const StoreContext = createContext();
 
@@ -35,9 +19,7 @@ export const useStoreData = (context = StoreContext, storeSelector, dataSelector
 
 	const store = storeSelector(value);
 
-	return useObserver(() => {
-		return dataSelector(store);
-	});
+	return useObserver(() => dataSelector(store));
 };
 
 export default StoreProviderCreator(createStore());

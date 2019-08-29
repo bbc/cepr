@@ -1,16 +1,21 @@
 import { action, observable } from 'mobx';
-import { getMemberByEmail } from '../services/DropboxService';
+import { getActiveMembers, getCurrentUserFolders, getMemberByEmail } from '../services/DropboxService';
+import { persistCurrentUser } from '../services/StorageService';
 
-export class UserStore {
-	/**
-	 * @TODO
-	 * Remove hard-coded user email address, or make it only set in development env
-	 **/
-	@observable
-	email?: string = 'cepr.test.user2@gmail.com';
+export default class {
+	rootStore: RootStore;
 
 	@observable
-	member?: DropboxTypes.team.MembersGetInfoItemMemberInfo;
+	email?: string = process.env.NODE_ENV === 'test' ? 'cepr.test.user2@gmail.com' : undefined;
+
+	@observable
+	member?: DropboxTypes.team.MemberProfile;
+
+	@observable
+	memberFolders: Array<DropboxTypes.files.FolderMetadata>;
+
+	@observable
+	members?: Array<DropboxTypes.team.TeamMemberInfo>;
 
 	@observable
 	error?: string;
@@ -26,8 +31,13 @@ export class UserStore {
 	}
 
 	@action
-	setMember(member: DropboxTypes.team.MembersGetInfoItemMemberInfo) {
+	setMember(member: DropboxTypes.team.MemberProfile) {
 		this.member = member;
+	}
+
+	@action
+	setMembers(members: Array<DropboxTypes.team.TeamMemberInfo>) {
+		this.members = members;
 	}
 
 	@action.bound
@@ -41,24 +51,43 @@ export class UserStore {
 			this.setError(undefined);
 		}
 
-		const { error, member } = await getMemberByEmail(this.email);
+		const { error: getMemberError, member } = await getMemberByEmail(this.email);
 
-		if (error) {
-			this.setError(error);
+		if (!member) {
+			this.setError(getMemberError);
 			return false;
 		}
 
-		if (member) {
-			this.setMember(member);
-			onSuccess();
+		const { error: getMembersError, members } = await getActiveMembers();
+
+		if (!members) {
+			this.setError(getMembersError);
+			return false;
 		}
+
+		this.setMember(member);
+		this.setMembers(members);
+
+		persistCurrentUser(member);
+		this.rootStore.workspaceStore.hydrateWorkspaces();
+		this.rootStore.workspaceStore.setNewProjectUser(member);
+
+		/**
+		 * @TODO
+		 * root path (the argument for getCurrentUserFolders) should be sourced from settings, also need to investigate why there's a need to cast here
+		 **/
+		// const userFolders = (await getCurrentUserFolders('')) as DropboxTypes.files.FolderMetadata[];
+		// this.memberFolders = userFolders;
+		// console.log(userFolders);
+		onSuccess();
 	}
 
-	constructor(initialState?: UserState) {
+	constructor(root: RootStore, initialState?: UserState) {
+		this.rootStore = root;
+		this.memberFolders = observable([]);
+
 		if (initialState) {
 			this.email = initialState.email;
 		}
 	}
 }
-
-export default new UserStore();

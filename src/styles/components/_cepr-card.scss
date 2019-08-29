@@ -1,11 +1,36 @@
 .cepr-card {
 	background-color: #fff;
 	padding: $base-spacing;
+
+	&--multi {
+		margin-bottom: $base-spacing;
+	}
+}
+
+.cepr-card__header,
+.cepr-card__footer {
+	width: calc(100% + #{$base-spacing * 2});
+	margin-left: -$base-spacing;
+}
+
+.cepr-card__body {
+	padding: $base-spacing 0;
+}
+
+.cepr-card__header {
+	padding: 0 $base-spacing $base-spacing;
+	border-bottom: 1px solid $beeb-border-color;
+
+	h2 {
+		margin: 0;
+	}
 }
 
 .cepr-card__footer {
 	border-top: 1px solid $beeb-border-color;
 	padding: $base-spacing $base-spacing 0;
-	width: calc(100% + #{$base-spacing * 2});
-	margin-left: -$base-spacing;
+
+	> button + button {
+		margin: 0 ($base-spacing / 2);
+	}
 }

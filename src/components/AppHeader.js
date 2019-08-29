@@ -6,8 +6,8 @@ import routes from '../routes';
 const renderLinks = () =>
 	routes
 		.filter(r => r.authed)
-		.map(r => (
-			<Link to={r.path} className="igm-navigation-header__item gel-brevier">
+		.map((r, key) => (
+			<Link to={r.path} key={key} className="igm-navigation-header__item gel-brevier">
 				{r.text}
 			</Link>
 		));
