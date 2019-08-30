@@ -13,7 +13,7 @@ type WorkspaceMember = {
 
 type Workspace = {
 	ceprMeta: WorkspaceCeprMeta;
-	workspaceFolder: DropboxTypes.sharing.SharedFolderMetadata;
+	workspaceFolder: DropboxTypes.team.SharedFolderMetadata;
 	workspaceSubfolders: Array<DropboxTypes.files.FolderMetadata>;
 	creator: DropboxTypes.team.MemberProfile;
 	projects: Array<Project>;

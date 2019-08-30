@@ -4,12 +4,12 @@ import {
 	addMemberToWorkspace,
 	createProject,
 	createWorkspace,
-	removeMemberFromWorkspace,
+	removeMemberFromFolder,
 } from '../services/DropboxService';
-import { saveWorkspace, getWorkspaces, getWorkspaceById } from '../services/StorageService';
+import { saveWorkspace, getWorkspaces } from '../services/StorageService';
 
 export default class {
-	rootStore: RootStore;
+	rootStore: {};
 
 	@observable
 	newItem: WorkspaceCeprMeta = {
@@ -59,8 +59,8 @@ export default class {
 	}
 
 	@computed
-	get newProjectWorkspace(): Workspace | undefined {
-		return getWorkspaceById(this.newProject.workspaceId);
+	get newProjectWorkspace(): Workspace {
+		return <Workspace>this.workspaces.find(w => w.workspaceFolder.shared_folder_id === this.newProject.workspaceId);
 	}
 
 	@computed
@@ -88,18 +88,13 @@ export default class {
 		 * @TODO
 		 * gonna have to handle this error
 		 **/
-		if (!project || !this.newProjectWorkspace) {
+		if (!project) {
 			console.log('workspace create error', JSON.stringify(error));
 			return false;
 		}
 
-		/**
-		 * @TODO
-		 * pretty grim this pattern, spike if there's a better way
-		 **/
-		const workspace = this.newProjectWorkspace;
-		workspace.projects = workspace.projects.concat(project);
-		saveWorkspace(workspace);
+		this.newProjectWorkspace.projects.push(project);
+		saveWorkspace(this.newProjectWorkspace);
 		this.hydrateWorkspaces();
 		onSuccess(project);
 	}
@@ -129,13 +124,20 @@ export default class {
 
 	@action
 	async removeMemberFromWorkspace(workspace: Workspace, member: DropboxTypes.sharing.UserMembershipInfo) {
-		removeMemberFromWorkspace(workspace, member.user);
+		removeMemberFromFolder(workspace.workspaceFolder.shared_folder_id, member.user);
+	}
+
+	@action
+	async removeMemberFromProject(project: Project, member: DropboxTypes.sharing.UserMembershipInfo) {
+		//removeMemberFromFolder(project.projectFolder., member.user);
 	}
 
 	@action.bound
 	hydrateWorkspaces() {
 		const workspaces = getWorkspaces();
+		console.log('hydrated workspaces', workspaces);
 		this.workspaces.replace(workspaces);
+		console.log(this.workspaces);
 	}
 
 	@action.bound
@@ -193,7 +195,7 @@ export default class {
 		this.workspaceMetadataTemplate = id;
 	}
 
-	constructor(root: RootStore, initialState?: WorkspaceState) {
+	constructor(root: {}, initialState?: WorkspaceState) {
 		this.rootStore = root;
 		this.workspaces = observable([]);
 

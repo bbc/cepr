@@ -18,6 +18,8 @@ const saveWorkspace = (workspace: Workspace): void => {
 		w => w.workspaceFolder.shared_folder_id !== workspace.workspaceFolder.shared_folder_id
 	);
 
+	console.log(workspace);
+
 	window.localStorage.setItem('workspaces', JSON.stringify([...workspaces, workspace]));
 };
 

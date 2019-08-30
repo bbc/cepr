@@ -17,7 +17,7 @@ const routes = [
 		component: Workspaces,
 		exact: true,
 		path: '/workspaces',
-		text: 'Create project',
+		text: 'Workspaces',
 	},
 	{
 		authed: true,

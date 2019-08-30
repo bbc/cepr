@@ -1,10 +1,11 @@
 import React from 'react';
 import { render } from '@testing-library/react';
+import { observable } from 'mobx';
 import { Route, Switch } from 'react-router-dom';
 
 import { StoreAndRouter } from '../../test-utils/providers';
 
-import { UserStore } from '../../store/UserStore';
+import UserStore from '../../store/UserStore';
 import AuthedRoute from '../../components/AuthedRoute';
 
 describe('AuthedRoute', () => {
@@ -26,7 +27,11 @@ describe('AuthedRoute', () => {
 				<AuthedRoute path="/" exact component={() => <div>User logged in</div>} />
 				<Route path="/login" component={() => <div>User not logged in</div>} />
 			</Switch>,
-			{ wrapper: StoreAndRouter({ userStore: new UserStore({ email: 'keir.lavelle@bbc.co.uk' }) }) }
+			{
+				wrapper: StoreAndRouter(() =>
+					observable.box({ userStore: new UserStore({}, { email: 'keir.lavelle@bbc.co.uk' }) })
+				),
+			}
 		);
 
 		expect(getAllByText('User logged in').length).toBe(1);

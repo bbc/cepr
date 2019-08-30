@@ -1,12 +1,12 @@
 import { action, observable } from 'mobx';
-import { getActiveMembers, getCurrentUserFolders, getMemberByEmail } from '../services/DropboxService';
+import { getActiveMembers, getMemberByEmail } from '../services/DropboxService';
 import { persistCurrentUser } from '../services/StorageService';
 
 export default class {
-	rootStore: RootStore;
+	rootStore: { workspaceStore: WorkspaceStore };
 
 	@observable
-	email?: string = process.env.NODE_ENV === 'test' ? 'cepr.test.user2@gmail.com' : undefined;
+	email?: string = process.env.NODE_ENV === 'production' ? 'cepr.test.user2@gmail.com' : undefined;
 
 	@observable
 	member?: DropboxTypes.team.MemberProfile;
@@ -71,18 +71,10 @@ export default class {
 		persistCurrentUser(member);
 		this.rootStore.workspaceStore.hydrateWorkspaces();
 		this.rootStore.workspaceStore.setNewProjectUser(member);
-
-		/**
-		 * @TODO
-		 * root path (the argument for getCurrentUserFolders) should be sourced from settings, also need to investigate why there's a need to cast here
-		 **/
-		// const userFolders = (await getCurrentUserFolders('')) as DropboxTypes.files.FolderMetadata[];
-		// this.memberFolders = userFolders;
-		// console.log(userFolders);
 		onSuccess();
 	}
 
-	constructor(root: RootStore, initialState?: UserState) {
+	constructor(root: { workspaceStore: WorkspaceStore }, initialState?: UserState) {
 		this.rootStore = root;
 		this.memberFolders = observable([]);
 

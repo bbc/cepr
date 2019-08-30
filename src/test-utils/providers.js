@@ -2,11 +2,11 @@ import React from 'react';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 
-import { StoreProviderCreator, createStore } from '../store';
+import { storeProviderCreator, createStore } from '../store';
 
-export const StoreAndRouter = (store = createStore()) => {
+export const StoreAndRouter = (store = createStore) => {
 	const history = createMemoryHistory();
-	const StoreProvider = StoreProviderCreator(store);
+	const StoreProvider = storeProviderCreator(store);
 
 	return ({ children }) => (
 		<Router history={history}>

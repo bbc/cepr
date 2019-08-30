@@ -1,17 +1,17 @@
-import React from 'react';
-import { toJS } from 'mobx';
+import React, { useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import AppHeader from './AppHeader';
+import ProjectCard from './ProjectCard';
 import WorkspaceCard from './WorkspaceCard';
-import { StoreContext, useStoreData } from '../store';
+import { useStoreData } from '../store';
 
-function CreateProject() {
+const CreateProject = observer(() => {
 	const { workspaces } = useStoreData(
-		StoreContext,
 		store => ({ workspaceStore: store.workspaceStore }),
 		({ workspaceStore }) => ({ workspaces: workspaceStore.workspaces })
 	);
 
-	console.log({ workspaces: toJS(workspaces) });
+	const [activeWorkspace, setActiveWorkspace] = useState(undefined);
 
 	return (
 		<>
@@ -20,13 +20,27 @@ function CreateProject() {
 				<div className="gel-layout__item gel-2/3">
 					<h1 className="gel-great-primer-bold">Workspaces</h1>
 					{workspaces.map(workspace => (
-						<WorkspaceCard workspace={workspace} key={workspace.ceprMeta.createdAt} />
+						<WorkspaceCard
+							workspace={workspace}
+							onProjectsClick={setActiveWorkspace}
+							key={workspace.ceprMeta.createdAt}
+						/>
 					))}
 				</div>
+				{activeWorkspace && (
+					<div className="gel-layout__item gel-1/3 workspace__projects-wrapper">
+						<h2 className="gel-pica-bold">
+							Showing {activeWorkspace.projects.length} projects from {activeWorkspace.ceprMeta.name}
+						</h2>
+						{activeWorkspace.projects.map(p => (
+							<ProjectCard project={p} />
+						))}
+					</div>
+				)}
 			</div>
 		</>
 	);
-}
+});
 
 CreateProject.displayName = 'CreateProject';
 

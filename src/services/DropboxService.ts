@@ -29,7 +29,7 @@ const addMemberToWorkspace = async (workspace: Workspace, member: WorkspaceMembe
 	return await mountFolderForUser(workspace.workspaceFolder, member);
 };
 
-const removeMemberFromWorkspace = async (workspace: Workspace, member: DropboxTypes.sharing.UserInfo) => {
+const removeMemberFromFolder = async (folderId: string, member: DropboxTypes.sharing.UserInfo) => {
 	const dbx = new Dropbox({
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
 		fetch,
@@ -37,8 +37,8 @@ const removeMemberFromWorkspace = async (workspace: Workspace, member: DropboxTy
 	});
 
 	try {
-		await dbx.sharingUnmountFolder({ shared_folder_id: workspace.workspaceFolder.shared_folder_id });
-		await dbx.sharingRelinquishFolderMembership({ shared_folder_id: workspace.workspaceFolder.shared_folder_id });
+		await dbx.sharingUnmountFolder({ shared_folder_id: folderId });
+		await dbx.sharingRelinquishFolderMembership({ shared_folder_id: folderId });
 	} catch (e) {
 		return { error: e };
 	}
@@ -159,8 +159,10 @@ const createProject = async (name: string, workspace: Workspace, meta: ProjectCe
 	});
 
 	try {
-		const projectFolder = await dbx.filesCreateFolder({
+		const projectFolder = <DropboxTypes.sharing.SharedFolderMetadata>await dbx.sharingShareFolder({
 			path: `${workspace.workspaceFolder.path_lower}/Projects/${name}`,
+			member_policy: { '.tag': 'team' },
+			acl_update_policy: { '.tag': 'owner' },
 		});
 
 		return {
@@ -175,7 +177,7 @@ const createProject = async (name: string, workspace: Workspace, meta: ProjectCe
 	}
 };
 
-const getWorkspaceMembers = async (sharedFolderId: string) => {
+const getFolderMembers = async (sharedFolderId: string) => {
 	const { user } = getCurrentUser();
 
 	const dbx = new Dropbox({
@@ -185,8 +187,6 @@ const getWorkspaceMembers = async (sharedFolderId: string) => {
 	});
 
 	const members = await dbx.sharingListFolderMembers({ shared_folder_id: sharedFolderId });
-
-	console.log({ members });
 
 	return members.users;
 };
@@ -273,7 +273,7 @@ export {
 	getActiveMembers,
 	getCurrentUserFolders,
 	getMemberByEmail,
-	getWorkspaceMembers,
+	getFolderMembers,
 	getWorkspaceTemplateId,
-	removeMemberFromWorkspace,
+	removeMemberFromFolder,
 };

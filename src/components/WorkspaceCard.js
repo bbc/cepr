@@ -5,10 +5,10 @@ import parseISO from 'date-fns/parseISO';
 import GELIcon from '@bbc/igm-gel-icon';
 import Input from '@bbc/igm-input';
 import Select from '@bbc/igm-dropdown-select';
-import { useStoreData, StoreContext } from '../store';
-import { getWorkspaceMembers } from '../services/DropboxService';
+import { useStoreData } from '../store';
+import { getFolderMembers } from '../services/DropboxService';
 
-function WorkspaceCard({ workspace }) {
+function WorkspaceCard({ workspace, onProjectsClick }) {
 	const {
 		addMemberToWorkspace,
 		canCreateProject,
@@ -22,7 +22,6 @@ function WorkspaceCard({ workspace }) {
 		setNewProjectWorkspace,
 		workspaceAccessLevels,
 	} = useStoreData(
-		StoreContext,
 		store => ({ workspaceStore: store.workspaceStore, userStore: store.userStore }),
 		({ workspaceStore, userStore }) => ({
 			addMemberToWorkspace: workspaceStore.addMemberToWorkspace,
@@ -81,7 +80,7 @@ function WorkspaceCard({ workspace }) {
 
 	useEffect(() => {
 		if (showAddMember && workspace.workspaceFolder.shared_folder_id) {
-			getWorkspaceMembers(workspace.workspaceFolder.shared_folder_id).then(setWorkspaceMembers);
+			getFolderMembers(workspace.workspaceFolder.shared_folder_id).then(setWorkspaceMembers);
 		}
 	}, [workspace.workspaceFolder.shared_folder_id, showAddMember]);
 
@@ -204,9 +203,14 @@ function WorkspaceCard({ workspace }) {
 			{workspace.workspaceFolder.access_type['.tag'] === 'owner' ||
 			workspace.workspaceFolder.access_type['.tag'] === 'editor' ? (
 				<div className="cepr-card__footer">
-					<button className="cepr-btn cepr-btn--sm" disabled={!workspace.projects.length}>
+					<button
+						className="cepr-btn cepr-btn--sm"
+						disabled={!workspace.projects.length}
+						onClick={() => onProjectsClick(workspace)}
+					>
 						{workspace.projects.length} Projects{' '}
 					</button>
+
 					<button
 						className="cepr-btn cepr-btn--sm"
 						onClick={() => {
@@ -217,6 +221,7 @@ function WorkspaceCard({ workspace }) {
 					>
 						{showAddProject ? 'Cancel' : 'Create new project'}
 					</button>
+
 					<button
 						className="cepr-btn cepr-btn--sm"
 						onClick={() => {

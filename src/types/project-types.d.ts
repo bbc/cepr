@@ -7,7 +7,7 @@ type ProjectCeprMeta = {
 
 type Project = {
 	user: DropboxTypes.team.MemberProfile;
-	projectFolder: DropboxTypes.files.FolderMetadata;
+	projectFolder: DropboxTypes.files.SharedFolderMetadata;
 	ceprMeta: {
 		createdAt: string;
 		name: string;

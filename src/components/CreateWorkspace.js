@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import AppHeader from './AppHeader';
 import Notification from '@bbc/igm-notification';
-import { StoreContext, useStoreData } from '../store';
+import { useStoreData } from '../store';
 import Select from '@bbc/igm-dropdown-select';
 import Input from '@bbc/igm-input';
 
@@ -14,7 +14,6 @@ function CreateWorkspace() {
 		setWSName,
 		setWSProductionTeam,
 	} = useStoreData(
-		StoreContext,
 		store => ({
 			workspace: store.workspaceStore,
 		}),

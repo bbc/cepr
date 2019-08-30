@@ -1,25 +1,40 @@
 import React, { createContext, useContext } from 'react';
-import { useObserver } from 'mobx-react-lite';
+import { observable } from 'mobx';
+import { useLocalStore, useObserver } from 'mobx-react-lite';
+
+import compose from 'lodash/fp/compose';
 import RootStore from './RootStore';
 
-export const createStore = () => new RootStore();
-
+export const createStore = () => observable.box(new RootStore());
 export const StoreContext = createContext();
 
-export const StoreProviderCreator = store => ({ children }) => (
-	<StoreContext.Provider value={store}>{children}</StoreContext.Provider>
-);
-
-export const useStoreData = (context = StoreContext, storeSelector, dataSelector) => {
-	const value = useContext(context);
-
-	if (!value) {
-		throw new Error();
+export const useStore = () => {
+	const store = useContext(StoreContext);
+	if (!store) {
+		// this is especially useful in TypeScript so you don't need to be checking for null all the time
+		throw new Error('You have forgot to use StoreProvider, shame on you.');
 	}
-
-	const store = storeSelector(value);
-
-	return useObserver(() => dataSelector(store));
+	return store.get();
 };
 
-export default StoreProviderCreator(createStore());
+export const useStoreData = (storeSelector, dataSelector) => {
+	const store = useStore();
+
+	if (!store) {
+		throw new Error('Store is not defined');
+	}
+
+	return useObserver(() =>
+		compose(
+			dataSelector,
+			storeSelector
+		)(store)
+	);
+};
+
+export const storeProviderCreator = (store = createStore) => ({ children }) => {
+	const observableStore = useLocalStore(store);
+	return <StoreContext.Provider value={observableStore}>{children}</StoreContext.Provider>;
+};
+
+export default storeProviderCreator();

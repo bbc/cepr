@@ -2,11 +2,10 @@ import React from 'react';
 import GELIcon from '@bbc/igm-gel-icon';
 import Input from '@bbc/igm-input';
 import Notification from '@bbc/igm-notification';
-import { StoreContext, useStoreData } from '../store';
+import { useStoreData } from '../store';
 
 function Login({ history }) {
 	const { authUser, email, error, setEmail } = useStoreData(
-		StoreContext,
 		store => store.userStore,
 		userStore => ({
 			authUser: userStore.authUser,
