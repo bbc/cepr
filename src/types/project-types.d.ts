@@ -6,8 +6,7 @@ type ProjectCeprMeta = {
 };
 
 type Project = {
-	user: DropboxTypes.team.MemberProfile;
-	projectFolder: DropboxTypes.files.SharedFolderMetadata;
+	creator: DropboxTypes.team.MemberProfile;
 	ceprMeta: {
 		createdAt: string;
 		name: string;
@@ -15,4 +14,5 @@ type Project = {
 		user?: DropboxTypes.team.MemberProfile | undefined;
 		workspaceId: string;
 	};
+	projectFolder: DropboxTypes.sharing.SharedFolderMetadata;
 };

@@ -6,7 +6,7 @@ import GELIcon from '@bbc/igm-gel-icon';
 import Input from '@bbc/igm-input';
 import Select from '@bbc/igm-dropdown-select';
 import { useStoreData } from '../store';
-import { getFolderMembers } from '../services/DropboxService';
+import { getWorkspaceMembers } from '../services/DropboxService';
 
 function WorkspaceCard({ workspace, onProjectsClick }) {
 	const {
@@ -21,6 +21,7 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 		setNewProjectTemplate,
 		setNewProjectWorkspace,
 		workspaceAccessLevels,
+		user,
 	} = useStoreData(
 		store => ({ workspaceStore: store.workspaceStore, userStore: store.userStore }),
 		({ workspaceStore, userStore }) => ({
@@ -35,8 +36,11 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 			setNewProjectWorkspace: workspaceStore.setNewProjectWorkspace,
 			workspaceAccessLevels: workspaceStore.workspaceAccessLevels,
 			members: userStore.members,
+			user: userStore.member,
 		})
 	);
+
+	const isOwner = workspace.creator.team_member_id === user.team_member_id;
 
 	const [newWorkspaceMember, setNewWorkspaceMemberState] = useState({
 		member: { '.tag': 'dropbox_id' },
@@ -66,7 +70,12 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 	const [workspaceMembers, setWorkspaceMembers] = useState([]);
 
 	const memberOptions = members
-		.filter(member => !workspaceMembers.some(wm => wm.user.team_member_id === member.profile.team_member_id))
+		.filter(
+			// remove all members that are already a member of the workspace, or are the workspace creator
+			member =>
+				!workspaceMembers.some(wm => wm.profile.team_member_id === member.profile.team_member_id) &&
+				member.profile.team_member_id !== user.team_member_id
+		)
 		.map(member => ({
 			description: member.profile.name.display_name,
 			label: member.profile.email,
@@ -79,10 +88,11 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 	}));
 
 	useEffect(() => {
-		if (showAddMember && workspace.workspaceFolder.shared_folder_id) {
-			getFolderMembers(workspace.workspaceFolder.shared_folder_id).then(setWorkspaceMembers);
-		}
-	}, [workspace.workspaceFolder.shared_folder_id, showAddMember]);
+		getWorkspaceMembers(workspace.creator.team_member_id, workspace.projectsRootFolder).then(m => {
+			console.log({ m, workspace });
+			setWorkspaceMembers(workspace.members);
+		});
+	}, [workspace.creator.team_member_id, workspace.projectsRootFolder, workspace.members]);
 
 	return (
 		<div className="cepr-card cepr-card--multi" key={workspace.ceprMeta.createdAt}>
@@ -142,28 +152,25 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 						<h3>Member list</h3>
 
 						<ul className="workspace-card__member-list">
+							<li>
+								<GELIcon type="signout" />
+								<strong>{workspace.creator.display_name}</strong> <em>{workspace.creator.email}</em>
+								<span className={classnames(['cepr-badge', 'cepr-badge--owner'])}>owner</span>
+							</li>
 							{workspaceMembers.map(member => (
 								<li>
 									<GELIcon type="signout" />
-									<strong>{member.user.display_name}</strong> <em>{member.user.email}</em>
-									<span
-										className={classnames([
-											'cepr-badge',
-											`cepr-badge--${member.access_type['.tag']}`,
-										])}
-									>
-										{member.access_type['.tag']}
-									</span>
-									{workspace.workspaceFolder.access_type['.tag'] === 'owner' &&
-										member.access_type['.tag'] !== 'owner' && (
-											<button
-												onClick={() => removeMemberFromWorkspace(workspace, member)}
-												className="cepr-btn cepr-btn--danger cepr-btn--sm"
-												style={{ marginLeft: 8 }}
-											>
-												<GELIcon type="no" /> Remove
-											</button>
-										)}
+									<strong>{member.profile.display_name}</strong> <em>{member.profile.email}</em>
+									<span className={classnames(['cepr-badge', `cepr-badge--editor`])}>editor</span>
+									{isOwner && (
+										<button
+											onClick={() => removeMemberFromWorkspace(workspace, member)}
+											className="cepr-btn cepr-btn--danger cepr-btn--sm"
+											style={{ marginLeft: 8 }}
+										>
+											<GELIcon type="no" /> Remove
+										</button>
+									)}
 								</li>
 							))}
 						</ul>
@@ -200,8 +207,8 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 				)}
 			</div>
 
-			{workspace.workspaceFolder.access_type['.tag'] === 'owner' ||
-			workspace.workspaceFolder.access_type['.tag'] === 'editor' ? (
+			{workspace.creator.team_member_id === user.team_member_id ||
+			workspaceMembers.find(wspm => wspm.team_member_id === user.team_member_id) ? (
 				<div className="cepr-card__footer">
 					<button
 						className="cepr-btn cepr-btn--sm"

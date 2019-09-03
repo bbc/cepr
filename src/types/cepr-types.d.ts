@@ -16,11 +16,15 @@ type User = {
 
 type RootStore = {
 	workspaceStore: WorkspaceStore;
-	userStore: any;
+	userStore: UserStore;
 };
 
 type WorkspaceStore = {
 	hydrateWorkspaces: Function;
 	setNewProjectUser: Function;
 	workspaceMetadataTemplate?: string;
+};
+
+type UserStore = {
+	members: Array<DropboxTypes.team.TeamMemberInfo>;
 };

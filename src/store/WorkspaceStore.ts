@@ -1,19 +1,14 @@
 import { action, computed, observable, IObservableArray } from 'mobx';
 import format from 'date-fns/format';
-import {
-	addMemberToWorkspace,
-	createProject,
-	createWorkspace,
-	removeMemberFromFolder,
-} from '../services/DropboxService';
+import { addMemberToWorkspace, createProject, createWorkspace } from '../services/DropboxService';
 import { saveWorkspace, getWorkspaces } from '../services/StorageService';
 
 export default class {
-	rootStore: {};
+	rootStore: { userStore: UserStore };
 
 	@observable
 	newItem: WorkspaceCeprMeta = {
-		rootFolder: '/cepr-test',
+		rootFolder: '/cepr-root',
 		name: '',
 		productionTeam: '',
 		folderTemplate: '',
@@ -99,9 +94,21 @@ export default class {
 		onSuccess(project);
 	}
 
+	get projectRootName() {
+		/**
+		 * @TODO
+		 * This should be based upon the newItem.follderTemplate property
+		 **/
+		return 'Projects';
+	}
+
 	@action.bound
 	async createWorkspace(onSuccess: Function) {
-		const { error, workspace } = await createWorkspace(this.newItem, ['Media', 'Projects', 'Misc', 'Clips']);
+		const { error, workspace } = await createWorkspace(this.newItem, this.projectRootName, [
+			'Media',
+			'Misc',
+			'Clips',
+		]);
 
 		/**
 		 * @TODO
@@ -117,14 +124,21 @@ export default class {
 		onSuccess(workspace);
 	}
 
-	@action
+	@action.bound
 	async addMemberToWorkspace(workspace: Workspace, member: WorkspaceMember) {
 		addMemberToWorkspace(workspace, member);
+
+		const memberProfile = <DropboxTypes.team.TeamMemberInfo>(
+			this.rootStore.userStore.members.find(m => m.profile.team_member_id === member.member.dropbox_id)
+		);
+
+		workspace.members.push(memberProfile);
+		saveWorkspace(workspace);
 	}
 
 	@action
 	async removeMemberFromWorkspace(workspace: Workspace, member: DropboxTypes.sharing.UserMembershipInfo) {
-		removeMemberFromFolder(workspace.workspaceFolder.shared_folder_id, member.user);
+		//removeMemberFromFolder(workspace.workspaceFolder.shared_folder_id, member.user);
 	}
 
 	@action
@@ -135,9 +149,7 @@ export default class {
 	@action.bound
 	hydrateWorkspaces() {
 		const workspaces = getWorkspaces();
-		console.log('hydrated workspaces', workspaces);
 		this.workspaces.replace(workspaces);
-		console.log(this.workspaces);
 	}
 
 	@action.bound
@@ -195,7 +207,7 @@ export default class {
 		this.workspaceMetadataTemplate = id;
 	}
 
-	constructor(root: {}, initialState?: WorkspaceState) {
+	constructor(root: { userStore: UserStore }, initialState?: WorkspaceState) {
 		this.rootStore = root;
 		this.workspaces = observable([]);
 

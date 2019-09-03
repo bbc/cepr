@@ -13,8 +13,8 @@ export default class {
 	}
 
 	constructor() {
-		this.userStore = new UserStore(this);
-		this.workspaceStore = new WorkspaceStore(this, {
+		this.userStore = new UserStore(<RootStore>this);
+		this.workspaceStore = new WorkspaceStore(<RootStore>this, {
 			/**
 			 * @TODO
 			 *  this should be retrieved from storage, data schema may also change
@@ -38,7 +38,7 @@ export default class {
 				'project-template5',
 			],
 			newItem: {
-				rootFolder: '/cepr-test',
+				rootFolder: '/cepr-root',
 				name: '',
 				productionTeam: '',
 				folderTemplate: '',

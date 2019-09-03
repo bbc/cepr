@@ -1,7 +1,6 @@
 import { Dropbox, DropboxTeam } from 'dropbox';
 import fetch from 'isomorphic-fetch'; // or another library of choice.
 import { getCurrentUser } from './StorageService';
-import { defineBoundAction } from 'mobx/lib/internal';
 
 class DropboxRequestError extends Error {
 	error: string;
@@ -21,12 +20,14 @@ const addMemberToWorkspace = async (workspace: Workspace, member: WorkspaceMembe
 		selectUser: user.team_member_id,
 	});
 
-	await dbx.sharingAddFolderMember({
-		shared_folder_id: workspace.workspaceFolder.shared_folder_id,
-		members: [member],
-	});
+	workspace.projects.forEach(async project => {
+		await dbx.sharingAddFolderMember({
+			shared_folder_id: project.projectFolder.shared_folder_id,
+			members: [member],
+		});
 
-	return await mountFolderForUser(workspace.workspaceFolder, member);
+		await mountFolderForUser(project.projectFolder, member);
+	});
 };
 
 const removeMemberFromFolder = async (folderId: string, member: DropboxTypes.sharing.UserInfo) => {
@@ -160,14 +161,44 @@ const createProject = async (name: string, workspace: Workspace, meta: ProjectCe
 
 	try {
 		const projectFolder = <DropboxTypes.sharing.SharedFolderMetadata>await dbx.sharingShareFolder({
-			path: `${workspace.workspaceFolder.path_lower}/Projects/${name}`,
+			path: `${workspace.projectsRootFolder.path_lower}/${name}`,
 			member_policy: { '.tag': 'team' },
 			acl_update_policy: { '.tag': 'owner' },
 		});
 
+		await dbx.sharingAddFolderMember({
+			shared_folder_id: projectFolder.shared_folder_id,
+			members: workspace.members.map(m => ({
+				/**
+				 * @TODO
+				 * this accesss level should be inherited from the access level that the workspace is shared with the user at
+				 * but at the moment this we are not saving the access level in localstorage so everything is being set to editor
+				 **/
+				access_level: {
+					'.tag': 'editor',
+				},
+				member: {
+					'.tag': 'dropbox_id',
+					dropbox_id: m.profile.team_member_id,
+				},
+			})),
+		});
+
+		workspace.members.forEach(async m => {
+			const memberDbx = new Dropbox({
+				fetch,
+				accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
+				selectUser: m.profile.team_member_id,
+			});
+
+			await memberDbx.sharingMountFolder({
+				shared_folder_id: projectFolder.shared_folder_id,
+			});
+		});
+
 		return {
 			project: {
-				user,
+				creator: user,
 				ceprMeta: { ...meta, createdAt: new Date().toISOString() },
 				projectFolder,
 			},
@@ -175,6 +206,39 @@ const createProject = async (name: string, workspace: Workspace, meta: ProjectCe
 	} catch (e) {
 		return { error: new DropboxRequestError(e, e) };
 	}
+};
+
+const getWorkspaceMembers = async (
+	teamMemberId: DropboxTypes.team_common.TeamMemberId,
+	projectsRoot: DropboxTypes.files.FolderMetadata
+) => {
+	const dbx = new Dropbox({
+		fetch,
+		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
+		selectUser: teamMemberId,
+	});
+
+	const projectFolders = await dbx.filesListFolder({
+		include_has_explicit_shared_members: true,
+		path: projectsRoot.path_lower || '',
+		recursive: false,
+	});
+
+	return await projectFolders.entries.reduce<Promise<DropboxTypes.sharing.UserMembershipInfo[]>>(
+		async (members, folder) => {
+			if (folder['.tag'] !== 'folder' || !folder.shared_folder_id) {
+				return members;
+			}
+
+			const mbs = await members;
+			const folderMembers = await getFolderMembers(folder.shared_folder_id);
+
+			return folderMembers
+				.filter(fm => !mbs.some(mb => mb.user.team_member_id !== fm.user.team_member_id))
+				.concat(mbs);
+		},
+		Promise.resolve([])
+	);
 };
 
 const getFolderMembers = async (sharedFolderId: string) => {
@@ -195,8 +259,8 @@ const getCurrentUserFolders = async (root: string) => {
 	const { user } = getCurrentUser();
 
 	const dbx = new Dropbox({
-		fetch,
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
+		fetch,
 		selectUser: user.team_member_id,
 	});
 
@@ -213,7 +277,11 @@ const getCurrentUserFolders = async (root: string) => {
 	return userFolders.entries;
 };
 
-const createWorkspace = async (ceprMeta: WorkspaceCeprMeta, paths: Array<string>): Promise<WorkspaceCreateResponse> => {
+const createWorkspace = async (
+	ceprMeta: WorkspaceCeprMeta,
+	projectsRootName: string,
+	paths: Array<string>
+): Promise<WorkspaceCreateResponse> => {
 	const { user } = getCurrentUser();
 
 	const dbx = new Dropbox({
@@ -222,45 +290,56 @@ const createWorkspace = async (ceprMeta: WorkspaceCeprMeta, paths: Array<string>
 		selectUser: user.team_member_id,
 	});
 
-	try {
-		const workspaceSubfolders: Array<DropboxTypes.files.FolderMetadata> = [];
+	const workspaceRoot = `${ceprMeta.rootFolder}/${ceprMeta.name}`.toLowerCase();
 
-		const workspaceFolder = <DropboxTypes.sharing.SharedFolderMetadata>await dbx.sharingShareFolder({
-			path: `${ceprMeta.rootFolder}/${ceprMeta.name}`,
-			member_policy: { '.tag': 'team' },
-			acl_update_policy: { '.tag': 'owner' },
-		});
+	try {
+		const allPaths = [
+			workspaceRoot,
+			`${workspaceRoot}/${projectsRootName}`,
+			...paths.map(p => `${workspaceRoot}/${p}`),
+		];
 
 		const workspaceHydrate = await dbx.filesCreateFolderBatch({
 			force_async: false,
-			paths: paths.map(p => `${ceprMeta.rootFolder}/${ceprMeta.name}/${p}`),
+			paths: allPaths,
 		});
 
-		/**
-		 * @TODO
-		 * We'll need to handle the scenario where the job may be processed asynchronously
-		 **/
-		if (workspaceHydrate['.tag'] === 'complete') {
-			workspaceHydrate.entries.forEach(folder => {
-				/**
-				 * @TODO
-				 * handle folder creation errors
-				 **/
-				if (folder['.tag'] === 'success') {
-					workspaceSubfolders.push(folder.metadata);
-				}
-			});
+		if (workspaceHydrate['.tag'] !== 'complete') {
+			throw new DropboxRequestError('job processing async', 'job processing async');
 		}
 
-		return {
-			workspace: {
+		const workspace = workspaceHydrate.entries.reduce<Workspace>(
+			(ws, folder) => {
+				// if the folder didnt process successfully then just return  the workspace as is - really we should throw here?
+				if (folder['.tag'] !== 'success') {
+					return ws;
+				}
+
+				// if we match the workspace root then set that property
+				if (folder.metadata.path_lower && folder.metadata.path_lower === workspaceRoot) {
+					return { ...ws, workspaceFolder: folder.metadata };
+				}
+
+				// if the projects root folder, set that property
+				if (folder.metadata.path_lower && folder.metadata.path_lower.includes(projectsRootName.toLowerCase())) {
+					return { ...ws, projectsRootFolder: folder.metadata };
+				}
+
+				// otherwise just push the folder into the workspace subfolders array
+				return { ...ws, workspaceSubfolders: [...ws.workspaceSubfolders, folder.metadata] };
+			},
+			{
 				creator: user,
 				ceprMeta: { ...ceprMeta, createdAt: new Date().toISOString() },
+				members: [],
 				projects: [],
-				workspaceFolder,
-				workspaceSubfolders,
-			},
-		};
+				projectsRootFolder: { id: 'unassigned', name: 'unassigned' },
+				workspaceFolder: { id: 'unassigned', name: 'unassigned' },
+				workspaceSubfolders: [],
+			}
+		);
+
+		return { workspace };
 	} catch (e) {
 		return { error: new DropboxRequestError(e, e) };
 	}
@@ -272,8 +351,9 @@ export {
 	createWorkspace,
 	getActiveMembers,
 	getCurrentUserFolders,
-	getMemberByEmail,
 	getFolderMembers,
+	getMemberByEmail,
+	getWorkspaceMembers,
 	getWorkspaceTemplateId,
 	removeMemberFromFolder,
 };

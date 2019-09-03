@@ -8,15 +8,17 @@ type WorkspaceCeprMeta = {
 
 type WorkspaceMember = {
 	access_level: DropboxTypes.sharing.AccessLevel;
-	member: DropboxTypes.sharing.MemberSelectorDropbox;
+	member: DropboxTypes.sharing.MemberSelectorDropboxId;
 };
 
 type Workspace = {
 	ceprMeta: WorkspaceCeprMeta;
-	workspaceFolder: DropboxTypes.team.SharedFolderMetadata;
-	workspaceSubfolders: Array<DropboxTypes.files.FolderMetadata>;
 	creator: DropboxTypes.team.MemberProfile;
+	members: Array<DropboxTypes.team.TeamMemberInfo>;
+	workspaceFolder: DropboxTypes.files.FolderMetadata;
+	workspaceSubfolders: Array<DropboxTypes.files.FolderMetadata>;
 	projects: Array<Project>;
+	projectsRootFolder: DropboxTypes.files.FolderMetadata;
 };
 
 type WorkspaceState = {

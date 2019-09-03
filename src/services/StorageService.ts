@@ -14,12 +14,7 @@ const getWorkspaceById = (id: string): Workspace | undefined =>
 	getWorkspaces().find(w => w.workspaceFolder.shared_folder_id === id);
 
 const saveWorkspace = (workspace: Workspace): void => {
-	const workspaces = getWorkspaces().filter(
-		w => w.workspaceFolder.shared_folder_id !== workspace.workspaceFolder.shared_folder_id
-	);
-
-	console.log(workspace);
-
+	const workspaces = getWorkspaces().filter(w => w.workspaceFolder.id !== workspace.workspaceFolder.id);
 	window.localStorage.setItem('workspaces', JSON.stringify([...workspaces, workspace]));
 };
 
