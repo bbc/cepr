@@ -17,7 +17,7 @@ type Workspace = {
 	members: Array<DropboxTypes.team.TeamMemberInfo>;
 	workspaceFolder: DropboxTypes.files.FolderMetadata;
 	workspaceSubfolders: Array<DropboxTypes.files.FolderMetadata>;
-	projects: Array<Project>;
+	projects: Array<Project>;,
 	projectsRootFolder: DropboxTypes.files.FolderMetadata;
 };
 

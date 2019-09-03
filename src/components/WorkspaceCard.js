@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
 import classnames from 'classnames';
 import format from 'date-fns/format';
 import parseISO from 'date-fns/parseISO';
@@ -8,7 +9,7 @@ import Select from '@bbc/igm-dropdown-select';
 import { useStoreData } from '../store';
 import { getWorkspaceMembers } from '../services/DropboxService';
 
-function WorkspaceCard({ workspace, onProjectsClick }) {
+const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 	const {
 		addMemberToWorkspace,
 		canCreateProject,
@@ -88,9 +89,9 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 	}));
 
 	useEffect(() => {
+		setWorkspaceMembers(workspace.members);
 		getWorkspaceMembers(workspace.creator.team_member_id, workspace.projectsRootFolder).then(m => {
-			console.log({ m, workspace });
-			setWorkspaceMembers(workspace.members);
+			console.log({ m });
 		});
 	}, [workspace.creator.team_member_id, workspace.projectsRootFolder, workspace.members]);
 
@@ -208,7 +209,7 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 			</div>
 
 			{workspace.creator.team_member_id === user.team_member_id ||
-			workspaceMembers.find(wspm => wspm.team_member_id === user.team_member_id) ? (
+			workspaceMembers.find(wspm => wspm.profile.team_member_id === user.team_member_id) ? (
 				<div className="cepr-card__footer">
 					<button
 						className="cepr-btn cepr-btn--sm"
@@ -249,6 +250,6 @@ function WorkspaceCard({ workspace, onProjectsClick }) {
 			)}
 		</div>
 	);
-}
+});
 
 export default WorkspaceCard;
