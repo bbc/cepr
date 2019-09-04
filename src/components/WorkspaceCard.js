@@ -7,7 +7,6 @@ import GELIcon from '@bbc/igm-gel-icon';
 import Input from '@bbc/igm-input';
 import Select from '@bbc/igm-dropdown-select';
 import { useStoreData } from '../store';
-import { getWorkspaceMembers } from '../services/DropboxService';
 
 const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 	const {
@@ -21,6 +20,7 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 		setNewProjectName,
 		setNewProjectTemplate,
 		setNewProjectWorkspace,
+		syncWorkspaceMembers,
 		workspaceAccessLevels,
 		user,
 	} = useStoreData(
@@ -35,6 +35,7 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 			setNewProjectName: workspaceStore.setNewProjectName,
 			setNewProjectTemplate: workspaceStore.setNewProjectTemplate,
 			setNewProjectWorkspace: workspaceStore.setNewProjectWorkspace,
+			syncWorkspaceMembers: workspaceStore.syncWorkspaceMembers,
 			workspaceAccessLevels: workspaceStore.workspaceAccessLevels,
 			members: userStore.members,
 			user: userStore.member,
@@ -90,10 +91,14 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 
 	useEffect(() => {
 		setWorkspaceMembers(workspace.members);
-		getWorkspaceMembers(workspace.creator.team_member_id, workspace.projectsRootFolder).then(m => {
-			console.log({ m });
-		});
-	}, [workspace.creator.team_member_id, workspace.projectsRootFolder, workspace.members]);
+
+		if (showAddMember) {
+			console.log('syncing');
+			syncWorkspaceMembers(workspace);
+		}
+
+		// eslint-disable-next-line
+	}, [syncWorkspaceMembers, workspace.members.length, showAddMember]);
 
 	return (
 		<div className="cepr-card cepr-card--multi" key={workspace.ceprMeta.createdAt}>
@@ -120,7 +125,11 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 								Select team member
 								<Select
 									onClear={setNewWorkspaceMemberId}
-									onChange={opt => setNewWorkspaceMemberId(opt.value)}
+									onChange={opt => {
+										if (opt) {
+											setNewWorkspaceMemberId(opt.value);
+										}
+									}}
 									options={memberOptions}
 									isClearable
 									isSearchable
@@ -154,20 +163,25 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 
 						<ul className="workspace-card__member-list">
 							<li>
-								<GELIcon type="signout" />
-								<strong>{workspace.creator.display_name}</strong> <em>{workspace.creator.email}</em>
+								<span className="workspace-card__member-name-wrapper">
+									<GELIcon type="signout" />
+									<strong>{workspace.creator.name.display_name}</strong>{' '}
+									<em>{workspace.creator.email}</em>
+								</span>
 								<span className={classnames(['cepr-badge', 'cepr-badge--owner'])}>owner</span>
 							</li>
 							{workspaceMembers.map(member => (
 								<li>
-									<GELIcon type="signout" />
-									<strong>{member.profile.display_name}</strong> <em>{member.profile.email}</em>
-									<span className={classnames(['cepr-badge', `cepr-badge--editor`])}>editor</span>
+									<span className="workspace-card__member-name-wrapper">
+										<GELIcon type="signout" />
+										<strong>{member.profile.name.display_name}</strong>{' '}
+										<em>{member.profile.email}</em>
+									</span>
 									{isOwner && (
 										<button
 											onClick={() => removeMemberFromWorkspace(workspace, member)}
 											className="cepr-btn cepr-btn--danger cepr-btn--sm"
-											style={{ marginLeft: 8 }}
+											style={{ marginLeft: 8, justifySelf: 'flex-end' }}
 										>
 											<GELIcon type="no" /> Remove
 										</button>
@@ -214,7 +228,7 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 					<button
 						className="cepr-btn cepr-btn--sm"
 						disabled={!workspace.projects.length}
-						onClick={() => onProjectsClick(workspace)}
+						onClick={() => onProjectsClick(workspace.workspaceFolder.id)}
 					>
 						{workspace.projects.length} Projects{' '}
 					</button>
@@ -222,7 +236,7 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 					<button
 						className="cepr-btn cepr-btn--sm"
 						onClick={() => {
-							setNewProjectWorkspace(workspace.workspaceFolder.shared_folder_id);
+							setNewProjectWorkspace(workspace.workspaceFolder.id);
 							setShowAddMember(false);
 							setShowAddProject(!showAddProject);
 						}}

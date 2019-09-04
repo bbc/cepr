@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import AppHeader from './AppHeader';
 import ProjectCard from './ProjectCard';
 import WorkspaceCard from './WorkspaceCard';
 import { useStoreData } from '../store';
 
-const CreateProject = observer(() => {
-	const { workspaces } = useStoreData(
+const Workspaces = observer(() => {
+	const { workspaces, activeWorkspace, setActiveWorkspaceId } = useStoreData(
 		store => ({ workspaceStore: store.workspaceStore }),
-		({ workspaceStore }) => ({ workspaces: workspaceStore.workspaces })
+		({ workspaceStore }) => ({
+			workspaces: workspaceStore.workspaces,
+			activeWorkspace: workspaceStore.activeWorkspace,
+			setActiveWorkspaceId: workspaceStore.setActiveWorkspaceId,
+		})
 	);
 
-	const [activeWorkspace, setActiveWorkspace] = useState(undefined);
+	console.log(activeWorkspace);
 
 	return (
 		<>
@@ -22,7 +26,7 @@ const CreateProject = observer(() => {
 					{workspaces.map(workspace => (
 						<WorkspaceCard
 							workspace={workspace}
-							onProjectsClick={setActiveWorkspace}
+							onProjectsClick={setActiveWorkspaceId}
 							key={workspace.ceprMeta.createdAt}
 						/>
 					))}
@@ -33,7 +37,7 @@ const CreateProject = observer(() => {
 							Showing {activeWorkspace.projects.length} projects from {activeWorkspace.ceprMeta.name}
 						</h2>
 						{activeWorkspace.projects.map(p => (
-							<ProjectCard project={p} />
+							<ProjectCard project={p} workspace={activeWorkspace} />
 						))}
 					</div>
 				)}
@@ -42,6 +46,6 @@ const CreateProject = observer(() => {
 	);
 });
 
-CreateProject.displayName = 'CreateProject';
+Workspaces.displayName = 'Workspaces';
 
-export default CreateProject;
+export default Workspaces;

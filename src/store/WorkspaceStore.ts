@@ -1,6 +1,13 @@
 import { action, computed, observable, IObservableArray } from 'mobx';
 import format from 'date-fns/format';
-import { addMemberToWorkspace, createProject, createWorkspace } from '../services/DropboxService';
+import {
+	addMemberToProject,
+	addMemberToWorkspace,
+	createProject,
+	createWorkspace,
+	removeMemberFromFolder,
+	getWorkspaceMembers,
+} from '../services/DropboxService';
 import { saveWorkspace, getWorkspaces } from '../services/StorageService';
 
 export default class {
@@ -24,6 +31,19 @@ export default class {
 	};
 
 	@observable
+	activeWorkspaceId?: string;
+
+	@action.bound
+	setActiveWorkspaceId(workspaceId: string) {
+		this.activeWorkspaceId = workspaceId;
+	}
+
+	@computed
+	get activeWorkspace(): Workspace | undefined {
+		return this.workspaces.find(w => w.workspaceFolder.id === this.activeWorkspaceId);
+	}
+
+	@observable
 	folderTemplates?: IObservableArray<SelectOption>;
 
 	@observable
@@ -36,6 +56,11 @@ export default class {
 	workspaces: IObservableArray<Workspace>;
 
 	workspaceAccessLevels: Array<SelectOption> = [
+		{ label: 'Can edit', value: 'editor' },
+		{ label: 'Read only', value: 'viewer' },
+	];
+
+	projectAccessLevels: Array<SelectOption> = [
 		{ label: 'Can edit', value: 'editor' },
 		{ label: 'Read only', value: 'viewer' },
 	];
@@ -55,7 +80,7 @@ export default class {
 
 	@computed
 	get newProjectWorkspace(): Workspace {
-		return <Workspace>this.workspaces.find(w => w.workspaceFolder.shared_folder_id === this.newProject.workspaceId);
+		return <Workspace>this.workspaces.find(w => w.workspaceFolder.id === this.newProject.workspaceId);
 	}
 
 	@computed
@@ -125,8 +150,19 @@ export default class {
 	}
 
 	@action.bound
-	async addMemberToWorkspace(workspace: Workspace, member: WorkspaceMember) {
-		addMemberToWorkspace(workspace, member);
+	async addMemberToWorkspace(workspace: Workspace, member: NewFolderMember) {
+		await addMemberToWorkspace(workspace, member);
+
+		const memberProfile = <DropboxTypes.team.TeamMemberInfo>(
+			this.rootStore.userStore.members.find(m => m.profile.team_member_id === member.member.dropbox_id)
+		);
+
+		workspace.members.push(memberProfile);
+	}
+
+	@action.bound
+	async addMemberToProject(workspace: Workspace, project: Project, member: NewFolderMember) {
+		addMemberToProject(workspace, project, member);
 
 		const memberProfile = <DropboxTypes.team.TeamMemberInfo>(
 			this.rootStore.userStore.members.find(m => m.profile.team_member_id === member.member.dropbox_id)
@@ -138,12 +174,17 @@ export default class {
 
 	@action
 	async removeMemberFromWorkspace(workspace: Workspace, member: DropboxTypes.sharing.UserMembershipInfo) {
-		//removeMemberFromFolder(workspace.workspaceFolder.shared_folder_id, member.user);
+		// removeMemberFromFolder(workspace.workspaceFolder.id, member.user);
 	}
 
-	@action
-	async removeMemberFromProject(project: Project, member: DropboxTypes.sharing.UserMembershipInfo) {
-		//removeMemberFromFolder(project.projectFolder., member.user);
+	@action.bound
+	async removeMemberFromProject(
+		workspace: Workspace,
+		project: Project,
+		member: DropboxTypes.sharing.UserMembershipInfo
+	) {
+		await removeMemberFromFolder(project.projectFolder.shared_folder_id, member.user);
+		this.syncWorkspaceMembers(workspace);
 	}
 
 	@action.bound
@@ -205,6 +246,24 @@ export default class {
 	@action.bound
 	setWorkspaceMetadataTemplate(id: string) {
 		this.workspaceMetadataTemplate = id;
+	}
+
+	@action.bound
+	async syncWorkspaceMembers(workspace: Workspace) {
+		const members = await getWorkspaceMembers(workspace.creator.team_member_id, workspace.projectsRootFolder);
+
+		console.log({ members });
+
+		workspace.members = this.rootStore.userStore.members.filter(m =>
+			members.some(
+				mb =>
+					mb.user.team_member_id === m.profile.team_member_id &&
+					m.profile.team_member_id !== workspace.creator.team_member_id
+			)
+		);
+
+		saveWorkspace(workspace);
+		this.hydrateWorkspaces();
 	}
 
 	constructor(root: { userStore: UserStore }, initialState?: WorkspaceState) {

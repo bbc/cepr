@@ -6,7 +6,7 @@ type WorkspaceCeprMeta = {
 	createdAt?: string;
 };
 
-type WorkspaceMember = {
+type NewFolderMember = {
 	access_level: DropboxTypes.sharing.AccessLevel;
 	member: DropboxTypes.sharing.MemberSelectorDropboxId;
 };
@@ -17,7 +17,7 @@ type Workspace = {
 	members: Array<DropboxTypes.team.TeamMemberInfo>;
 	workspaceFolder: DropboxTypes.files.FolderMetadata;
 	workspaceSubfolders: Array<DropboxTypes.files.FolderMetadata>;
-	projects: Array<Project>;,
+	projects: Array<Project>;
 	projectsRootFolder: DropboxTypes.files.FolderMetadata;
 };
 

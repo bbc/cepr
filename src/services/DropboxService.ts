@@ -1,5 +1,7 @@
 import { Dropbox, DropboxTeam } from 'dropbox';
 import fetch from 'isomorphic-fetch'; // or another library of choice.
+import compose from 'lodash/fp/compose';
+import flatten from 'lodash/fp/flatten';
 import { getCurrentUser } from './StorageService';
 
 class DropboxRequestError extends Error {
@@ -11,13 +13,26 @@ class DropboxRequestError extends Error {
 	}
 }
 
-const addMemberToWorkspace = async (workspace: Workspace, member: WorkspaceMember) => {
-	const { user } = getCurrentUser();
-
+const addMemberToProject = async (workspace: Workspace, project: Project, member: NewFolderMember) => {
 	const dbx = new Dropbox({
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
 		fetch,
-		selectUser: user.team_member_id,
+		selectUser: workspace.creator.team_member_id,
+	});
+
+	await dbx.sharingAddFolderMember({
+		shared_folder_id: project.projectFolder.shared_folder_id,
+		members: [member],
+	});
+
+	await mountFolderForUser(project.projectFolder, member);
+};
+
+const addMemberToWorkspace = async (workspace: Workspace, member: NewFolderMember) => {
+	const dbx = new Dropbox({
+		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
+		fetch,
+		selectUser: workspace.creator.team_member_id,
 	});
 
 	workspace.projects.forEach(async project => {
@@ -39,13 +54,16 @@ const removeMemberFromFolder = async (folderId: string, member: DropboxTypes.sha
 
 	try {
 		await dbx.sharingUnmountFolder({ shared_folder_id: folderId });
+	} catch (e) {}
+
+	try {
 		await dbx.sharingRelinquishFolderMembership({ shared_folder_id: folderId });
 	} catch (e) {
 		return { error: e };
 	}
 };
 
-const mountFolderForUser = async (folder: DropboxTypes.sharing.SharedFolderMetadata, member: WorkspaceMember) => {
+const mountFolderForUser = async (folder: DropboxTypes.sharing.SharedFolderMetadata, member: NewFolderMember) => {
 	const dbx = new Dropbox({
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
 		fetch,
@@ -156,12 +174,12 @@ const createProject = async (name: string, workspace: Workspace, meta: ProjectCe
 	const dbx = new Dropbox({
 		fetch,
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
-		selectUser: user.team_member_id,
+		selectUser: workspace.creator.team_member_id,
 	});
 
 	try {
 		const projectFolder = <DropboxTypes.sharing.SharedFolderMetadata>await dbx.sharingShareFolder({
-			path: `${workspace.projectsRootFolder.path_lower}/${name}`,
+			path: `${workspace.projectsRootFolder.path_display}/${name}`,
 			member_policy: { '.tag': 'team' },
 			acl_update_policy: { '.tag': 'owner' },
 		});
@@ -224,30 +242,35 @@ const getWorkspaceMembers = async (
 		recursive: false,
 	});
 
-	return await projectFolders.entries.reduce<Promise<DropboxTypes.sharing.UserMembershipInfo[]>>(
-		async (members, folder) => {
+	const removeDuplicateMembers = (members: DropboxTypes.sharing.UserMembershipInfo[]) => {
+		const exists: any = {};
+
+		return members.filter(m =>
+			exists.hasOwnProperty(m.user.team_member_id) ? false : (exists[<string>m.user.team_member_id] = true)
+		);
+	};
+
+	const members = await Promise.all(
+		projectFolders.entries.map(folder => {
 			if (folder['.tag'] !== 'folder' || !folder.shared_folder_id) {
-				return members;
+				return Promise.resolve([]);
 			}
 
-			const mbs = await members;
-			const folderMembers = await getFolderMembers(folder.shared_folder_id);
-
-			return folderMembers
-				.filter(fm => !mbs.some(mb => mb.user.team_member_id !== fm.user.team_member_id))
-				.concat(mbs);
-		},
-		Promise.resolve([])
+			return getFolderMembers(teamMemberId, folder.shared_folder_id);
+		})
 	);
+
+	return <DropboxTypes.sharing.UserMembershipInfo[]>compose(
+		removeDuplicateMembers,
+		flatten
+	)(members);
 };
 
-const getFolderMembers = async (sharedFolderId: string) => {
-	const { user } = getCurrentUser();
-
+const getFolderMembers = async (ownerId: string, sharedFolderId: string) => {
 	const dbx = new Dropbox({
 		fetch,
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
-		selectUser: user.team_member_id,
+		selectUser: ownerId,
 	});
 
 	const members = await dbx.sharingListFolderMembers({ shared_folder_id: sharedFolderId });
@@ -346,6 +369,7 @@ const createWorkspace = async (
 };
 
 export {
+	addMemberToProject,
 	addMemberToWorkspace,
 	createProject,
 	createWorkspace,

@@ -6,14 +6,25 @@
 		margin: ($base-spacing / 2) 0;
 		display: flex;
 		align-items: center;
+		justify-content: space-between;
 
 		> strong {
 			margin: 0 $base-spacing;
 		}
 
-		.cepr-badge {
+		.cepr-badge,
+		.cepr-btn {
 			justify-self: flex-end;
 			margin-left: auto;
 		}
+	}
+}
+
+.workspace-card__member-name-wrapper {
+	display: inline-flex;
+	align-items: center;
+
+	> strong {
+		margin: 0 $base-spacing;
 	}
 }
