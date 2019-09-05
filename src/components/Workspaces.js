@@ -4,6 +4,7 @@ import AppHeader from './AppHeader';
 import ProjectCard from './ProjectCard';
 import WorkspaceCard from './WorkspaceCard';
 import { useStoreData } from '../store';
+import { parsePath } from 'history';
 
 const Workspaces = observer(() => {
 	const { workspaces, activeWorkspace, setActiveWorkspaceId } = useStoreData(
@@ -35,7 +36,7 @@ const Workspaces = observer(() => {
 							Showing {activeWorkspace.projects.length} projects from {activeWorkspace.ceprMeta.name}
 						</h2>
 						{activeWorkspace.projects.map(p => (
-							<ProjectCard project={p} workspace={activeWorkspace} />
+							<ProjectCard key={p.projectFolder.name} project={p} workspace={activeWorkspace} />
 						))}
 					</div>
 				)}
