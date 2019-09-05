@@ -3,13 +3,13 @@ import { getActiveMembers, getMemberByEmail } from '../services/DropboxService';
 import { persistCurrentUser } from '../services/StorageService';
 
 export default class {
-	rootStore: { workspaceStore: WorkspaceStore };
+	rootStore: RootStore;
 
 	@observable
-	email?: string = process.env.NODE_ENV === 'production' ? 'cepr.test.user2@gmail.com' : undefined;
+	email?: string;
 
 	@observable
-	member?: DropboxTypes.team.MemberProfile;
+	member?: User;
 
 	@observable
 	memberFolders: Array<DropboxTypes.files.FolderMetadata>;
@@ -32,7 +32,10 @@ export default class {
 
 	@action
 	setMember(member: DropboxTypes.team.MemberProfile) {
-		this.member = member;
+		this.member = {
+			user: member,
+			meta: { logged_in_at: new Date().toISOString() },
+		};
 	}
 
 	@action
@@ -74,7 +77,7 @@ export default class {
 		onSuccess();
 	}
 
-	constructor(root: { workspaceStore: WorkspaceStore }, initialState?: UserState) {
+	constructor(root: RootStore, initialState?: { email: string }) {
 		this.rootStore = root;
 		this.memberFolders = observable([]);
 

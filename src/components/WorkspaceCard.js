@@ -38,7 +38,7 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 			syncWorkspaceMembers: workspaceStore.syncWorkspaceMembers,
 			workspaceAccessLevels: workspaceStore.workspaceAccessLevels,
 			members: userStore.members,
-			user: userStore.member,
+			user: userStore.member.user,
 		})
 	);
 

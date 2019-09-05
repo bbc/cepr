@@ -12,7 +12,7 @@ import {
 import { saveWorkspace, getWorkspaces } from '../services/StorageService';
 
 export default class {
-	rootStore: { userStore: UserStore };
+	rootStore: RootStore;
 
 	/**
 	 * @TODO
@@ -135,6 +135,10 @@ export default class {
 		return 'Projects';
 	}
 
+	/**
+	 * @TODO
+	 * gonna have to handle this error
+	 **/
 	@action.bound
 	async createWorkspace(onSuccess: Function) {
 		const { error, workspace } = await createWorkspace(this.newItem, this.projectRootName, [
@@ -143,17 +147,12 @@ export default class {
 			'Clips',
 		]);
 
-		/**
-		 * @TODO
-		 * gonna have to handle this error
-		 **/
 		if (!workspace) {
 			console.log('workspace create error', JSON.stringify(error));
-			return false;
+			throw error;
 		}
 
 		saveWorkspace(workspace);
-		this.hydrateWorkspaces();
 		onSuccess(workspace);
 	}
 
@@ -269,10 +268,9 @@ export default class {
 		);
 
 		saveWorkspace(workspace);
-		this.hydrateWorkspaces();
 	}
 
-	constructor(root: { userStore: UserStore }, initialState?: WorkspaceState) {
+	constructor(root: RootStore, initialState?: WorkspaceState) {
 		this.rootStore = root;
 		this.workspaces = observable([]);
 

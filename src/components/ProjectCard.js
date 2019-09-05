@@ -17,7 +17,7 @@ const ProjectCard = observer(({ workspace, project }) => {
 			allUsers: userStore.members,
 			projectAccessLevels: workspaceStore.projectAccessLevels,
 			removeMemberFromProject: workspaceStore.removeMemberFromProject,
-			user: userStore.member,
+			user: userStore.member.user,
 		})
 	);
 
