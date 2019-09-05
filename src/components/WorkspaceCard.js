@@ -84,16 +84,10 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 			value: member.profile.team_member_id,
 		}));
 
-	const templateOptions = projectTemplates.map(template => ({
-		label: template,
-		value: template,
-	}));
-
 	useEffect(() => {
 		setWorkspaceMembers(workspace.members);
 
 		if (showAddMember) {
-			console.log('syncing');
 			syncWorkspaceMembers(workspace);
 		}
 
@@ -197,7 +191,7 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 						<label className="igm-input__label">
 							Select project template
 							<Select
-								options={templateOptions}
+								options={projectTemplates}
 								onChange={({ value }) => setNewProjectTemplate(value)}
 								isClearable
 								isSearchable
@@ -244,15 +238,17 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 						{showAddProject ? 'Cancel' : 'Create new project'}
 					</button>
 
-					<button
-						className="cepr-btn cepr-btn--sm"
-						onClick={() => {
-							setShowAddMember(!showAddMember);
-							setShowAddProject(false);
-						}}
-					>
-						{showAddMember ? 'Cancel' : 'Add / Edit members'}
-					</button>
+					{isOwner && (
+						<button
+							className="cepr-btn cepr-btn--sm"
+							onClick={() => {
+								setShowAddMember(!showAddMember);
+								setShowAddProject(false);
+							}}
+						>
+							{showAddMember ? 'Cancel' : 'Add / Edit members'}
+						</button>
+					)}
 				</div>
 			) : (
 				<div className="cepr-card__footer">

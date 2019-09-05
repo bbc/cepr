@@ -11,7 +11,6 @@ type Project = {
 		createdAt: string;
 		name: string;
 		template: string;
-		user?: DropboxTypes.team.MemberProfile | undefined;
 		workspaceId: string;
 	};
 	projectFolder: DropboxTypes.sharing.SharedFolderMetadata;

@@ -13,6 +13,24 @@ class DropboxRequestError extends Error {
 	}
 }
 
+const getProjectTemplates = async (templatesPath: string) => {
+	const dbx = new Dropbox({
+		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
+		fetch,
+		selectUser: process.env.REACT_APP_DROPBOX_ADMIN_USER_ID,
+	});
+
+	const projectTemplates = await dbx.filesListFolder({ path: templatesPath });
+
+	return projectTemplates.entries.reduce<Array<SelectOption>>((templates, entry) => {
+		if (entry['.tag'] !== 'file') {
+			return templates;
+		}
+
+		return [...templates, { label: entry.name, value: entry.name }];
+	}, []);
+};
+
 const addMemberToProject = async (workspace: Workspace, project: Project, member: NewFolderMember) => {
 	const dbx = new Dropbox({
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
@@ -168,7 +186,7 @@ const getMemberByEmail = async (email: string) => {
 	}
 };
 
-const createProject = async (name: string, workspace: Workspace, meta: ProjectCeprMeta) => {
+const createProject = async (templatesPath: string, name: string, workspace: Workspace, meta: ProjectCeprMeta) => {
 	const { user } = getCurrentUser();
 
 	const dbx = new Dropbox({
@@ -182,6 +200,14 @@ const createProject = async (name: string, workspace: Workspace, meta: ProjectCe
 			path: `${workspace.projectsRootFolder.path_display}/${name}`,
 			member_policy: { '.tag': 'team' },
 			acl_update_policy: { '.tag': 'owner' },
+		});
+
+		await dbx.filesCopy({
+			from_path: `${templatesPath}/${meta.template}`,
+			to_path: `${projectFolder.path_lower}/${meta.template}`,
+			allow_shared_folder: false,
+			autorename: false,
+			allow_ownership_transfer: false,
 		});
 
 		await dbx.sharingAddFolderMember({
@@ -202,14 +228,14 @@ const createProject = async (name: string, workspace: Workspace, meta: ProjectCe
 			})),
 		});
 
-		workspace.members.forEach(async m => {
+		workspace.members.forEach(m => {
 			const memberDbx = new Dropbox({
 				fetch,
 				accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
 				selectUser: m.profile.team_member_id,
 			});
 
-			await memberDbx.sharingMountFolder({
+			memberDbx.sharingMountFolder({
 				shared_folder_id: projectFolder.shared_folder_id,
 			});
 		});
@@ -377,6 +403,7 @@ export {
 	getCurrentUserFolders,
 	getFolderMembers,
 	getMemberByEmail,
+	getProjectTemplates,
 	getWorkspaceMembers,
 	getWorkspaceTemplateId,
 	removeMemberFromFolder,

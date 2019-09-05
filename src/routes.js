@@ -1,6 +1,5 @@
 import Workspaces from './components/Workspaces';
 import CreateWorkspace from './components/CreateWorkspace';
-import SearchProject from './components/SearchProject';
 
 import Login from './components/Login';
 
@@ -18,13 +17,6 @@ const routes = [
 		exact: true,
 		path: '/workspaces',
 		text: 'Workspaces',
-	},
-	{
-		authed: true,
-		component: SearchProject,
-		exact: true,
-		path: '/project/search',
-		text: 'Search project',
 	},
 	{
 		authed: false,

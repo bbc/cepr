@@ -31,11 +31,11 @@ export default class {
 				{ label: 'Wimbledon', value: 'wimbledon' },
 			],
 			projectTemplates: [
-				'project-template1',
-				'project-template2',
-				'project-template3',
-				'project-template4',
-				'project-template5',
+				{ label: 'template', value: '/path/to/template' },
+				{ label: 'template', value: '/path/to/template' },
+				{ label: 'template', value: '/path/to/template' },
+				{ label: 'template', value: '/path/to/template' },
+				{ label: 'template', value: '/path/to/template' },
 			],
 			newItem: {
 				rootFolder: '/cepr-root',

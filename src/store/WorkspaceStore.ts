@@ -5,6 +5,7 @@ import {
 	addMemberToWorkspace,
 	createProject,
 	createWorkspace,
+	getProjectTemplates,
 	removeMemberFromFolder,
 	getWorkspaceMembers,
 } from '../services/DropboxService';
@@ -12,6 +13,12 @@ import { saveWorkspace, getWorkspaces } from '../services/StorageService';
 
 export default class {
 	rootStore: { userStore: UserStore };
+
+	/**
+	 * @TODO
+	 * should be configurable
+	 **/
+	projectTemplatesPath: string = '/cepr-root/templates';
 
 	@observable
 	newItem: WorkspaceCeprMeta = {
@@ -50,7 +57,7 @@ export default class {
 	productionTeams?: IObservableArray<SelectOption>;
 
 	@observable
-	projectTemplates?: IObservableArray<string>;
+	projectTemplates?: IObservableArray<SelectOption>;
 
 	@observable
 	workspaces: IObservableArray<Workspace>;
@@ -99,6 +106,7 @@ export default class {
 		}
 
 		const { error, project } = await createProject(
+			this.projectTemplatesPath,
 			this.newProjectFullName,
 			this.newProjectWorkspace,
 			this.newProject
@@ -204,7 +212,7 @@ export default class {
 	}
 
 	@action.bound
-	setProjectTemplates(projectTemplates: Array<string>) {
+	setProjectTemplates(projectTemplates: Array<SelectOption>) {
 		this.projectTemplates = observable(projectTemplates);
 	}
 
@@ -252,8 +260,6 @@ export default class {
 	async syncWorkspaceMembers(workspace: Workspace) {
 		const members = await getWorkspaceMembers(workspace.creator.team_member_id, workspace.projectsRootFolder);
 
-		console.log({ members });
-
 		workspace.members = this.rootStore.userStore.members.filter(m =>
 			members.some(
 				mb =>
@@ -273,7 +279,8 @@ export default class {
 		if (initialState) {
 			this.setFolderTemplates(initialState.folderTemplates);
 			this.setProductionTeams(initialState.productionTeams);
-			this.setProjectTemplates(initialState.projectTemplates);
 		}
+
+		getProjectTemplates(this.projectTemplatesPath).then(this.setProjectTemplates);
 	}
 }

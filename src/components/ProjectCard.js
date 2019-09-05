@@ -6,6 +6,9 @@ import Select from '@bbc/igm-dropdown-select';
 import { useStoreData } from '../store';
 import { getFolderMembers } from '../services/DropboxService';
 
+const app = window.require('electron').remote.app;
+const { shell } = window.require('electron');
+
 const ProjectCard = observer(({ workspace, project }) => {
 	const { addMemberToProject, allUsers, projectAccessLevels, removeMemberFromProject, user } = useStoreData(
 		store => ({ workspaceStore: store.workspaceStore, userStore: store.userStore }),
@@ -43,8 +46,6 @@ const ProjectCard = observer(({ workspace, project }) => {
 		[newProjectMember]
 	);
 
-	console.log(project.ceprMeta.name, workspace.members);
-
 	useEffect(() => {
 		if (showProjectMembers) {
 			getFolderMembers(workspace.creator.team_member_id, project.projectFolder.shared_folder_id).then(members => {
@@ -73,6 +74,19 @@ const ProjectCard = observer(({ workspace, project }) => {
 			value: member.profile.team_member_id,
 		}));
 
+	const isOwner = workspace.creator.team_member_id === user.team_member_id;
+
+	const openProject = proj => {
+		const userHomePath = app.getPath('home');
+
+		// the workspace owner gets the project synced to the full path whereas members only get the project synced to the dropbox root
+		const path = isOwner
+			? `${userHomePath}/Dropbox (BBC Sandbox)/${proj.projectFolder.path_lower}/${proj.ceprMeta.template}`
+			: `${userHomePath}/Dropbox (BBC Sandbox)/${proj.projectFolder.name}/${proj.ceprMeta.template}`;
+
+		console.log(shell.openItem(path));
+	};
+
 	return (
 		<div className="cepr-card" key={project.projectFolder.id} style={{ marginBottom: 16 }}>
 			<div className="cepr-card__header">
@@ -84,6 +98,9 @@ const ProjectCard = observer(({ workspace, project }) => {
 					<b>Project Path:</b> {project.projectFolder.path_lower}
 					<br />
 					<b>Project Template:</b> {project.ceprMeta.template}
+					<button className="cepr-btn" onClick={() => openProject(project)} style={{ marginTop: 16 }}>
+						Open Project
+					</button>
 				</div>
 
 				{showProjectMembers && (
@@ -177,11 +194,16 @@ const ProjectCard = observer(({ workspace, project }) => {
 				)}
 			</div>
 
-			<div className="cepr-card__footer">
-				<button className="cepr-btn cepr-btn--sm" onClick={() => setShowProjectMembers(!showProjectMembers)}>
-					{showProjectMembers ? 'Cancel' : 'Add / Edit Users'}
-				</button>
-			</div>
+			{project.creator.team_member_id === user.team_member_id ? (
+				<div className="cepr-card__footer">
+					<button
+						className="cepr-btn cepr-btn--sm"
+						onClick={() => setShowProjectMembers(!showProjectMembers)}
+					>
+						{showProjectMembers ? 'Cancel' : 'Add / Edit Users'}
+					</button>
+				</div>
+			) : null}
 		</div>
 	);
 });

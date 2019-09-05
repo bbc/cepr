@@ -26,7 +26,7 @@ type WorkspaceState = {
 	newItem: WorkspaceCeprMeta;
 	member?: DropboxTypes.team.MembersGetInfoItemMemberInfo;
 	productionTeams: Array<SelectOption>;
-	projectTemplates: Array<string>;
+	projectTemplates: Array<SelectOption>;
 };
 
 type WorkspaceCreateResponse = {

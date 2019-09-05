@@ -15,8 +15,6 @@ const Workspaces = observer(() => {
 		})
 	);
 
-	console.log(activeWorkspace);
-
 	return (
 		<>
 			<AppHeader />
