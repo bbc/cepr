@@ -15,15 +15,15 @@ function CreateWorkspace() {
 		setWSProductionTeam,
 	} = useStoreData(
 		store => ({
-			workspace: store.workspaceStore,
+			newWorkspaceStore: store.newWorkspaceStore,
 		}),
-		({ workspace }) => ({
-			createWorkspace: workspace.createWorkspace,
-			folderTemplates: workspace.folderTemplates,
-			productionTeams: workspace.productionTeams,
-			setWSFolder: workspace.setNewItemFolderTemplate,
-			setWSName: workspace.setNewItemName,
-			setWSProductionTeam: workspace.setNewItemProductionTeam,
+		({ newWorkspaceStore }) => ({
+			createWorkspace: newWorkspaceStore.createWorkspace,
+			folderTemplates: newWorkspaceStore.folderTemplates,
+			productionTeams: newWorkspaceStore.productionTeams,
+			setWSFolder: newWorkspaceStore.setFolderTemplate,
+			setWSName: newWorkspaceStore.setName,
+			setWSProductionTeam: newWorkspaceStore.setProductionTeam,
 		})
 	);
 
@@ -70,7 +70,7 @@ function CreateWorkspace() {
 								onClick={() =>
 									createWorkspace(workspace =>
 										setWorkspaceCreateMessage(
-											`Workspace ${workspace.ceprMeta.name} created successfully`
+											`Workspace ${workspace.state.ceprMeta.name} created successfully`
 										)
 									)
 								}

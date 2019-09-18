@@ -1,4 +1,4 @@
-.workspace-card__member-list {
+.member-list {
 	list-style: none;
 	padding: 0;
 
@@ -20,11 +20,11 @@
 	}
 }
 
-.workspace-card__member-name-wrapper {
+.member-list__member-name-wrapper {
 	display: inline-flex;
 	align-items: center;
-
-	> strong {
+	justify-content: flex-start;
+	strong {
 		margin: 0 $base-spacing;
 	}
 }

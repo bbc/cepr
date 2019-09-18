@@ -4,13 +4,12 @@ import AppHeader from './AppHeader';
 import ProjectCard from './ProjectCard';
 import WorkspaceCard from './WorkspaceCard';
 import { useStoreData } from '../store';
-import { parsePath } from 'history';
 
 const Workspaces = observer(() => {
-	const { workspaces, activeWorkspace, setActiveWorkspaceId } = useStoreData(
+	const { workspaceModels, activeWorkspace, setActiveWorkspaceId } = useStoreData(
 		store => ({ workspaceStore: store.workspaceStore }),
 		({ workspaceStore }) => ({
-			workspaces: workspaceStore.workspaces,
+			workspaceModels: workspaceStore.workspaces,
 			activeWorkspace: workspaceStore.activeWorkspace,
 			setActiveWorkspaceId: workspaceStore.setActiveWorkspaceId,
 		})
@@ -22,21 +21,21 @@ const Workspaces = observer(() => {
 			<div className="gel-wrap">
 				<div className="gel-layout__item gel-2/3">
 					<h1 className="gel-great-primer-bold">Workspaces</h1>
-					{workspaces.map(workspace => (
+					{workspaceModels.map(workspace => (
 						<WorkspaceCard
 							workspace={workspace}
 							onProjectsClick={setActiveWorkspaceId}
-							key={workspace.ceprMeta.createdAt}
+							key={workspace.id}
 						/>
 					))}
 				</div>
 				{activeWorkspace && (
 					<div className="gel-layout__item gel-1/3 workspace__projects-wrapper">
 						<h2 className="gel-pica-bold">
-							Showing {activeWorkspace.projects.length} projects from {activeWorkspace.ceprMeta.name}
+							Showing {activeWorkspace.projectCount} projects from {activeWorkspace.state.ceprMeta.name}
 						</h2>
 						{activeWorkspace.projects.map(p => (
-							<ProjectCard key={p.projectFolder.name} project={p} workspace={activeWorkspace} />
+							<ProjectCard key={p.state.projectFolder.name} project={p} />
 						))}
 					</div>
 				)}

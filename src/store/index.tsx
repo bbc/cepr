@@ -1,12 +1,11 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { observable } from 'mobx';
 import { useLocalStore, useObserver } from 'mobx-react-lite';
 
-import compose from 'lodash/fp/compose';
 import RootStore from './RootStore';
 
 export const createStore = () => observable.box(new RootStore());
-export const StoreContext = createContext();
+export const StoreContext = createContext(createStore());
 
 export const useStore = () => {
 	const store = useContext(StoreContext);
@@ -17,23 +16,18 @@ export const useStore = () => {
 	return store.get();
 };
 
-export const useStoreData = (storeSelector, dataSelector) => {
+export const useStoreData = (storeSelector: Function, dataSelector: Function) => {
 	const store = useStore();
 
 	if (!store) {
 		throw new Error('Store is not defined');
 	}
 
-	return useObserver(() =>
-		compose(
-			dataSelector,
-			storeSelector
-		)(store)
-	);
+	return useObserver(() => dataSelector(storeSelector(store)));
 };
 
-export const storeProviderCreator = (store = createStore) => ({ children }) => {
-	const observableStore = useLocalStore(store);
+export const storeProviderCreator = (storeCreator = createStore) => ({ children }: { children: ReactNode }) => {
+	const observableStore = useLocalStore(storeCreator);
 	return <StoreContext.Provider value={observableStore}>{children}</StoreContext.Provider>;
 };
 

@@ -1,17 +1,23 @@
-type ProjectCeprMeta = {
-	name: string;
-	template: string;
-	user?: DropboxTypes.team.MemberProfile;
-	workspaceId: string;
+type IProject = IFolder & {
+	id: string;
+	children: IProject[];
+	downloadLink?: string;
+	parent?: IProject;
+	state: Project;
+	store: RootStore;
+	workspace: IWorkspace | undefined;
 };
 
-type Project = {
-	creator: DropboxTypes.team.MemberProfile;
-	ceprMeta: {
-		createdAt: string;
-		name: string;
-		template: string;
-		workspaceId: string;
-	};
+type Project = DropboxFolderModelState & {
+	ceprMeta: ProjectCeprMeta;
 	projectFolder: DropboxTypes.sharing.SharedFolderMetadata;
+};
+
+type ProjectCeprMeta = {
+	createdAt?: string;
+	name: string;
+	parentId?: string;
+	template: string;
+	workspaceId: string;
+	user?: DropboxTypes.team.MemberProfile;
 };

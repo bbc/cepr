@@ -1,4 +1,4 @@
-import { action, observable } from 'mobx';
+import { action, observable, autorun } from 'mobx';
 import { getActiveMembers, getMemberByEmail } from '../services/DropboxService';
 import { persistCurrentUser } from '../services/StorageService';
 
@@ -12,10 +12,10 @@ export default class {
 	member?: User;
 
 	@observable
-	memberFolders: Array<DropboxTypes.files.FolderMetadata>;
+	memberFolders: DropboxTypes.files.FolderMetadata[];
 
 	@observable
-	members?: Array<DropboxTypes.team.TeamMemberInfo>;
+	members?: DropboxTypes.team.TeamMemberInfo[];
 
 	@observable
 	error?: string;
@@ -39,7 +39,7 @@ export default class {
 	}
 
 	@action
-	setMembers(members: Array<DropboxTypes.team.TeamMemberInfo>) {
+	setMembers(members: DropboxTypes.team.TeamMemberInfo[]) {
 		this.members = members;
 	}
 
@@ -70,10 +70,6 @@ export default class {
 
 		this.setMember(member);
 		this.setMembers(members);
-
-		persistCurrentUser(member);
-		this.rootStore.workspaceStore.hydrateWorkspaces();
-		this.rootStore.workspaceStore.setNewProjectUser(member);
 		onSuccess();
 	}
 
@@ -84,5 +80,11 @@ export default class {
 		if (initialState) {
 			this.email = initialState.email;
 		}
+
+		autorun(() => {
+			if (this.member) {
+				persistCurrentUser(this.member.user);
+			}
+		});
 	}
 }

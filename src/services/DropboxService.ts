@@ -22,13 +22,29 @@ const getProjectTemplates = async (templatesPath: string) => {
 
 	const projectTemplates = await dbx.filesListFolder({ path: templatesPath });
 
-	return projectTemplates.entries.reduce<Array<SelectOption>>((templates, entry) => {
+	return projectTemplates.entries.reduce<SelectOption<string>[]>((templates, entry) => {
 		if (entry['.tag'] !== 'file') {
 			return templates;
 		}
 
 		return [...templates, { label: entry.name, value: entry.name }];
 	}, []);
+};
+
+/**
+ * @TODO
+ * handle errors - permmission denied, file not found etc etc
+ **/
+const getFileDownloadLink = async (ownerId: string, path: string) => {
+	const dbx = new Dropbox({
+		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
+		fetch,
+		selectUser: ownerId,
+	});
+
+	const temporaryLinkResponse = await dbx.filesGetTemporaryLink({ path });
+
+	return temporaryLinkResponse.link;
 };
 
 const addMemberToProject = async (workspace: Workspace, project: Project, member: NewFolderMember) => {
@@ -43,7 +59,7 @@ const addMemberToProject = async (workspace: Workspace, project: Project, member
 		members: [member],
 	});
 
-	await mountFolderForUser(project.projectFolder, member);
+	await mountFolderForUser(project.projectFolder.shared_folder_id, member);
 };
 
 const addMemberToWorkspace = async (workspace: Workspace, member: NewFolderMember) => {
@@ -53,21 +69,73 @@ const addMemberToWorkspace = async (workspace: Workspace, member: NewFolderMembe
 		selectUser: workspace.creator.team_member_id,
 	});
 
-	workspace.projects.forEach(async project => {
+	workspace.projectIds.forEach(async id => {
 		await dbx.sharingAddFolderMember({
-			shared_folder_id: project.projectFolder.shared_folder_id,
+			shared_folder_id: id,
 			members: [member],
 		});
 
-		await mountFolderForUser(project.projectFolder, member);
+		await mountFolderForUser(id, member);
 	});
 };
 
-const removeMemberFromFolder = async (folderId: string, member: DropboxTypes.sharing.UserInfo) => {
+/**
+ * @TODO
+ * We fetch the folder info for the user because if the path property is not set then that indicates that the folder is not mounted,
+ * and we need to do that first, but we should also handle if the folder just isn't shared with the user
+ *
+ * Potential errors to handle
+ * - folder not shared with user
+ * - mount fails
+ * - mount hasn't finished by the time we request folder info the second time
+ **/
+const copyProjectForUser = async (
+	folder: DropboxTypes.sharing.SharedFolderMetadata,
+	member: DropboxTypes.team.MemberProfile
+) => {
 	const dbx = new Dropbox({
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
 		fetch,
 		selectUser: member.team_member_id,
+	});
+
+	let folderInfo = await dbx.sharingGetFolderMetadata({ shared_folder_id: folder.shared_folder_id });
+
+	// indicates that the file is not mounted for the user
+	if (!folderInfo.path_lower) {
+		await dbx.sharingMountFolder({ shared_folder_id: folder.shared_folder_id });
+		folderInfo = await dbx.sharingGetFolderMetadata({ shared_folder_id: folder.shared_folder_id });
+	}
+
+	await dbx.filesCopyV2({
+		allow_shared_folder: true,
+		from_path: <string>folderInfo.path_lower,
+		to_path: `/${folder.name} (Copy)`,
+	});
+};
+
+/**
+ * @TODO
+ * Before work can be started:
+ * - Add a property to the project ceprMeta called parentId, set it to the id of the source projectFolder whenever a copy is made
+ * - Add a property to the project ceprMeta called version and default it to 1
+ * 1. create dropbox token as owner
+ * 2. copy the folder into the workspace projects route, incrementing the version number
+ * (n.b. it would be nice if a different workspace could be selected from the UI to place the new version into)
+ * 3. share the folder with the user creating the copy, and all other workspace members
+ * 4. Mount for all ?
+ **/
+const createNewProjectVersion = async (
+	folder: DropboxTypes.sharing.SharedFolderMetadata,
+	owner: DropboxTypes.team.MemberProfile,
+	members: DropboxTypes.team.TeamMemberInfo[]
+) => {};
+
+const removeMemberFromFolder = async (folderId: string, member: DropboxTypes.team.TeamMemberInfo) => {
+	const dbx = new Dropbox({
+		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
+		fetch,
+		selectUser: member.profile.team_member_id,
 	});
 
 	try {
@@ -81,7 +149,7 @@ const removeMemberFromFolder = async (folderId: string, member: DropboxTypes.sha
 	}
 };
 
-const mountFolderForUser = async (folder: DropboxTypes.sharing.SharedFolderMetadata, member: NewFolderMember) => {
+const mountFolderForUser = async (folderId: string, member: NewFolderMember) => {
 	const dbx = new Dropbox({
 		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
 		fetch,
@@ -89,58 +157,11 @@ const mountFolderForUser = async (folder: DropboxTypes.sharing.SharedFolderMetad
 	});
 
 	try {
-		const result = await dbx.sharingMountFolder({ shared_folder_id: folder.shared_folder_id });
+		const result = await dbx.sharingMountFolder({ shared_folder_id: folderId });
 		return { folder: result };
 	} catch (e) {
 		return { error: e };
 	}
-};
-
-const createWorkspaceTemplate = async () => {
-	const dbx = new Dropbox({
-		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
-		fetch: fetch,
-	});
-
-	const { template_id } = await dbx.filePropertiesTemplatesAddForTeam({
-		name: process.env.REACT_APP_DROPBOX_WORKSPACE_TEMPLATE_NAME || 'test',
-		description: 'Workspace template to allow for filtering of workspaces',
-		fields: [
-			{
-				name: 'type',
-				description: 'The type of the folder - must be Workspace',
-				type: {
-					'.tag': 'string',
-				},
-			},
-		],
-	});
-
-	return { templateId: template_id };
-};
-
-const getWorkspaceTemplateId = async () => {
-	const dbx = new Dropbox({
-		accessToken: process.env.REACT_APP_DROPBOX_ACCESS_TOKEN,
-		fetch: fetch,
-	});
-
-	const { template_ids } = await dbx.filePropertiesTemplatesListForTeam();
-
-	if (!template_ids.length) {
-		return await createWorkspaceTemplate();
-	}
-
-	const templateId = template_ids.find(async template_id => {
-		const template = await dbx.filePropertiesTemplatesGetForTeam({ template_id });
-		return template.name === process.env.REACT_APP_DROPBOX_WORKSPACE_TEMPLATE_NAME;
-	});
-
-	if (templateId) {
-		return { templateId };
-	}
-
-	return await createWorkspaceTemplate();
 };
 
 const getActiveMembers = async () => {
@@ -245,6 +266,7 @@ const createProject = async (templatesPath: string, name: string, workspace: Wor
 				creator: user,
 				ceprMeta: { ...meta, createdAt: new Date().toISOString() },
 				projectFolder,
+				members: workspace.members,
 			},
 		};
 	} catch (e) {
@@ -326,10 +348,15 @@ const getCurrentUserFolders = async (root: string) => {
 	return userFolders.entries;
 };
 
+/**
+ * @TODO
+ * - handle if Dropbox decides to process the job async
+ * - handle if any of the folder creation responses do not indicate success
+ **/
 const createWorkspace = async (
 	ceprMeta: WorkspaceCeprMeta,
 	projectsRootName: string,
-	paths: Array<string>
+	paths: string[]
 ): Promise<WorkspaceCreateResponse> => {
 	const { user } = getCurrentUser();
 
@@ -381,7 +408,7 @@ const createWorkspace = async (
 				creator: user,
 				ceprMeta: { ...ceprMeta, createdAt: new Date().toISOString() },
 				members: [],
-				projects: [],
+				projectIds: [],
 				projectsRootFolder: { id: 'unassigned', name: 'unassigned' },
 				workspaceFolder: { id: 'unassigned', name: 'unassigned' },
 				workspaceSubfolders: [],
@@ -397,6 +424,8 @@ const createWorkspace = async (
 export {
 	addMemberToProject,
 	addMemberToWorkspace,
+	copyProjectForUser,
+	createNewProjectVersion,
 	createProject,
 	createWorkspace,
 	getActiveMembers,
@@ -404,7 +433,7 @@ export {
 	getFolderMembers,
 	getMemberByEmail,
 	getProjectTemplates,
+	getFileDownloadLink,
 	getWorkspaceMembers,
-	getWorkspaceTemplateId,
 	removeMemberFromFolder,
 };

@@ -1,24 +1,19 @@
 import UserStore from './UserStore';
+import NewProjectStore from './NewProjectStore';
+import NewWorkspaceStore from './NewWorkspaceStore';
+import ProjectStore from './ProjectStore';
 import WorkspaceStore from './WorkspaceStore';
 
-import { getWorkspaceTemplateId } from '../services/DropboxService';
-
 export default class {
+	newProjectStore: NewProjectStore;
+	newWorkspaceStore: NewWorkspaceStore;
+	projectStore: ProjectStore;
 	userStore: UserStore;
 	workspaceStore: WorkspaceStore;
 
-	async bootstrapApplication() {
-		const { templateId } = await getWorkspaceTemplateId();
-		this.workspaceStore.setWorkspaceMetadataTemplate(templateId);
-	}
-
 	constructor() {
-		this.userStore = new UserStore(<RootStore>this);
-		this.workspaceStore = new WorkspaceStore(<RootStore>this, {
-			/**
-			 * @TODO
-			 *  this should be retrieved from storage, data schema may also change
-			 **/
+		this.newProjectStore = new NewProjectStore(<RootStore>this);
+		this.newWorkspaceStore = new NewWorkspaceStore(<RootStore>this, {
 			folderTemplates: [
 				{ label: 'Sports template 1', value: 'template1' },
 				{ label: 'Sports template 2', value: 'template2' },
@@ -30,22 +25,9 @@ export default class {
 				{ label: 'World Cup Team', value: 'worldcupteam' },
 				{ label: 'Wimbledon', value: 'wimbledon' },
 			],
-			projectTemplates: [
-				{ label: 'template', value: '/path/to/template' },
-				{ label: 'template', value: '/path/to/template' },
-				{ label: 'template', value: '/path/to/template' },
-				{ label: 'template', value: '/path/to/template' },
-				{ label: 'template', value: '/path/to/template' },
-			],
-			newItem: {
-				rootFolder: '/cepr-root',
-				name: '',
-				productionTeam: '',
-				folderTemplate: '',
-				createdAt: undefined,
-			},
 		});
-
-		this.bootstrapApplication();
+		this.userStore = new UserStore(<RootStore>this);
+		this.workspaceStore = new WorkspaceStore(<RootStore>this);
+		this.projectStore = new ProjectStore(<RootStore>this);
 	}
 }
