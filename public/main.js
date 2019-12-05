@@ -11,8 +11,13 @@ function createWindow() {
 		},
 	});
 
+	const windowURL =
+		process.env.NODE_ENV === 'development'
+			? 'http://localhost:3000/'
+			: 'https://cepr-static-hosting-int.s3-eu-west-1.amazonaws.com/index.html';
+
 	// and load the index.html of the app.
-	win.loadURL('http://localhost:3000/');
+	win.loadURL(windowURL);
 }
 
 app.on('ready', createWindow);

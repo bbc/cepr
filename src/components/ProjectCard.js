@@ -95,7 +95,7 @@ const ProjectCard = observer(({ project }) => {
 							accessLevels={projectAccessLevels}
 							canAddMember={project.canAddMember}
 							defaultAccessLevel={projectAccessLevels[1]}
-							newMemberOptions={project.newMemberOptions}
+							newMemberOptions={project.nonMemberUserOptions}
 							onAccessLevelClear={setNewMemberDefaultAccessLevel}
 							onAccessLevelChange={setNewMemberAccessLevel}
 							onAddMember={saveNewMember}

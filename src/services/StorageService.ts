@@ -15,7 +15,7 @@ const getWorkspaceById = (id: string): Workspace | undefined =>
 	getWorkspaces().find(w => w.workspaceFolder.shared_folder_id === id);
 
 const saveProject = (project: Project): void => {
-	console.log('saving project', JSON.stringify(project));
+	// console.log('saving project', JSON.stringify(project));
 	const projects = getProjects().filter(
 		p => p.projectFolder.shared_folder_id !== project.projectFolder.shared_folder_id
 	);

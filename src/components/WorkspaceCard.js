@@ -82,7 +82,7 @@ const WorkspaceCard = observer(({ workspace, onProjectsClick }) => {
 							accessLevels={workspaceAccessLevels}
 							canAddMember={workspace.canAddMember}
 							defaultAccessLevel={workspaceAccessLevels[1]}
-							newMemberOptions={workspace.newMemberOptions}
+							newMemberOptions={workspace.nonMemberUserOptions}
 							onAccessLevelClear={setNewMemberDefaultAccessLevel}
 							onAccessLevelChange={setNewMemberAccessLevel}
 							onAddMember={saveNewMember}

@@ -2,7 +2,7 @@ import React from 'react';
 import Select from '@bbc/igm-dropdown-select';
 
 function FolderAddMemberForm({
-	accessLevelOptions,
+	accessLevels,
 	canAddMember,
 	defaultAccessLevel,
 	newMemberOptions,
@@ -32,8 +32,7 @@ function FolderAddMemberForm({
 						defaultValue={defaultAccessLevel}
 						onChange={onAccessLevelChange}
 						onClear={onAccessLevelClear}
-						options={accessLevelOptions}
-						isClearable
+						options={accessLevels}
 					/>
 				</label>
 			</div>

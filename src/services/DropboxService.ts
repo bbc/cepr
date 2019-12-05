@@ -226,7 +226,7 @@ const createProject = async (templatesPath: string, name: string, workspace: Wor
 		await dbx.filesCopy({
 			from_path: `${templatesPath}/${meta.template}`,
 			to_path: `${projectFolder.path_lower}/${meta.template}`,
-			allow_shared_folder: false,
+			allow_shared_folder: true,
 			autorename: false,
 			allow_ownership_transfer: false,
 		});

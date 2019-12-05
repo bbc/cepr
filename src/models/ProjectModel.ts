@@ -8,6 +8,7 @@ import {
 	removeMemberFromFolder,
 	createProject,
 } from '../services/DropboxService';
+
 import { saveProject } from '../services/StorageService';
 
 const { remote, shell } = window.require('electron');
@@ -28,7 +29,10 @@ class ProjectModel extends DropboxFolderModel implements IProject {
 			saveProject(state);
 		}
 
+		console.log(state);
+
 		autorun(() => {
+			console.log(this.membersState);
 			saveProject(Object.assign({}, this.state, this.membersState));
 		});
 
@@ -70,7 +74,7 @@ class ProjectModel extends DropboxFolderModel implements IProject {
 	@computed
 	get currentUserIsMember() {
 		return (
-			!!this.membersState.members.find(m => m.profile.team_member_id === this.user.team_member_id) ||
+			this.membersState.members.findIndex(m => m.profile.team_member_id === this.user.team_member_id) > -1 ||
 			this.creator.team_member_id === this.user.team_member_id
 		);
 	}
@@ -145,7 +149,7 @@ class ProjectModel extends DropboxFolderModel implements IProject {
 		const newItemMeta = {
 			...this.state.ceprMeta,
 			createdAt: new Date().toISOString(),
-			parentProject: this.id,
+			parentId: this.id,
 		};
 
 		const templatesPath = this.store.newProjectStore.projectTemplatesPath;
