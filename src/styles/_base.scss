@@ -1,0 +1,53 @@
+* {
+	box-sizing: border-box;
+	font-family: 'ReithSans', 'Lucida Grande', sans-serif;
+	letter-spacing: normal !important; // override gel typography classes using negative letter spacing
+}
+
+body h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+input,
+select,
+fieldset,
+textarea,
+dt,
+dd,
+div {
+	font-family: 'ReithSans', 'Lucida Grande', sans-serif !important;
+}
+
+*:focus {
+	outline: none;
+}
+
+body {
+	background-color: $sf-grey;
+	color: $dark-slate;
+}
+
+p {
+	margin: 0;
+}
+
+ul {
+	margin: 0;
+	padding: 0;
+}
+
+li {
+	list-style-type: none;
+}
+
+a {
+	text-decoration: none;
+}
+
+button {
+	border: none;
+	background-color: unset;
+}

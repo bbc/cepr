@@ -1,0 +1,45 @@
+.cepr-btn {
+	background-color: $sf-purple;
+	color: #fff;
+	cursor: pointer;
+	padding: ($base-spacing / 2) ($base-spacing * 1.5);
+
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+
+	> .gel-icon {
+		color: #fff;
+		width: 14px;
+		height: 14px;
+		margin-right: $base-spacing / 2;
+	}
+
+	&--block {
+		text-align: center;
+		display: flex;
+	}
+
+	&:hover {
+		background-color: darken($sf-purple, 2.5%);
+	}
+
+	&:disabled,
+	&[disabled] {
+		background-color: lighten($sf-purple, 5%);
+		pointer-events: none;
+	}
+
+	&--sm {
+		@include gel-typography('brevier');
+		padding: ($base-spacing / 4) ($base-spacing * 0.75);
+	}
+
+	&--danger {
+		background-color: $danger-red;
+
+		&:hover {
+			background-color: darken($danger-red, 2.5%);
+		}
+	}
+}
